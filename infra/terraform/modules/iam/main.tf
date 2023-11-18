@@ -1,0 +1,3 @@
+module "globals" {
+  source = "../globals"
+}
