@@ -32,14 +32,13 @@ resource "yandex_compute_instance" "bastion" {
   # ipv4 network interface
   network_interface {
     subnet_id = yandex_vpc_subnet.A.id
+    ipv4 = true
     nat = true
     nat_ip_address = yandex_vpc_address.bastion.external_ipv4_address[0].address
   }
 
   metadata = {
-    # this only grants access for the creator of the bastion host
-    # another ssh keys will have to be added manually
-    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+    ssh-keys = "ubuntu:${file(join(".", [var.iam_bastion_ssh_key_file, "pub"]))}"
   }
 }
 
@@ -49,4 +48,16 @@ resource "yandex_dns_recordset" "bastion" {
   type = "A"
   ttl = 600
   data = [ yandex_vpc_address.bastion.external_ipv4_address[0].address ]
+}
+
+data "external" "bastion_root_key" {
+    program = ["bash", "-c", join(" ", [
+               "BASTION_SSH_KEY=${var.iam_bastion_ssh_key_file}",
+               "BASTION_HOST=ubuntu@${yandex_dns_recordset.bastion.name}",
+               "BASTION_ROOT_SSH_KEY_FILE=/etc/ssh/ssh_host_rsa_key.pub",
+               "../modules/iam/scripts/get_bastion_ssh_key.sh"])]
+}
+
+locals {
+    bastion_key = "ubuntu:${data.external.bastion_root_key.result.key}"
 }

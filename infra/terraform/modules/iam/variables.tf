@@ -11,4 +11,7 @@ variable "dns_domain" {
     default = "iam.de1phin.ru"
 }
 
-
+variable "iam_bastion_ssh_key_file" {
+  type = string
+  default = "~/.ssh/iam_bastion"
+}
