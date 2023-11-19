@@ -7,11 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	BastionHost = "bastion.iam.de1phin.ru"
-	FolderId    = "b1gqe3skkuiko3bv671e"
-)
-
 var root = &cobra.Command{
 	Use:   "iamssh",
 	Short: "ssh wrapper for iam bastion",

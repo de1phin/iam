@@ -5,24 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 
 	"github.com/de1phin/iam/pkg/yccli"
 	"github.com/spf13/cobra"
-)
-
-func getAbsolutePath(file string) string {
-	homedir, _ := os.UserHomeDir()
-	return path.Join(homedir, file)
-}
-
-const (
-	LockBoxKeysName = "iam_bastion"
-)
-
-var (
-	IamBastionSshKeyFile    = getAbsolutePath(".ssh/iam_bastion")
-	IamBastionSshPubKeyFile = getAbsolutePath(".ssh/iam_bastion.pub")
 )
 
 type sshKey struct {
