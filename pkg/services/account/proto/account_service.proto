@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package iam.services.account;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "./account";
+
+service AccountService {
+    rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+    rpc GetAccount(GetAccountRequest) returns (GetAccountResponse);
+    rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
+    rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+
+    rpc CreateSshKey(CreateAccountRequest) returns (CreateSshKeyResponse);
+    rpc ListSshKeys(ListSshKeysRequest) returns (ListSshKeysResponse);
+    rpc DeleteSshKey(DeleteAccountRequest) returns (DeleteAccountResponse);
+
+    rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+}
+
+// Global models
+
+message Account {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+message SshKey {
+    string fingerprint = 1; // serves as ID
+    bytes public_key = 2;
+    string account_id = 3;
+    google.protobuf.Timestamp created_at = 4;
+}
+
+// Authentication
+
+message AuthenticateRequest {
+    bytes ssh_public_key = 1;
+}
+
+message AuthenticateResponse {
+    string account_id = 1;
+}
+
+// Account CRUD Requests/Responses
+
+message CreateAccountRequest {
+    string well_known_id = 1;
+    string name = 2;
+    string description = 3;
+}
+
+message CreateAccountResponse {
+    Account account = 1;
+}
+
+message GetAccountRequest {
+    string account_id = 1;
+}
+
+message GetAccountResponse {
+    Account account = 1;
+}
+
+message UpdateAccountRequest {
+    string account_id = 1;
+    google.protobuf.FieldMask update_mask = 2;
+
+    string name = 3;
+    string description = 4;
+}
+
+message UpdateAccountResponse {
+    Account account = 1;
+}
+
+message DeleteAccountRequest {
+    string account_id = 1;
+}
+
+message DeleteAccountResponse {}
+
+// SshKey CRUD Requests/Responses
+
+message CreateSshKeyRequest {
+    string account_id = 1;
+    bytes public_key = 2;
+}
+
+message CreateSshKeyResponse {
+    SshKey key = 1;
+}
+
+message ListSshKeysRequest {
+    string account_id = 1;
+}
+
+message ListSshKeysResponse {
+    repeated SshKey keys = 1;
+}
+
+message DeleteSshKeyRequest {
+    string account_id = 1;
+    string key_fingerprint = 2;
+} 
+
+message DeleteSshKeyResponse {}
