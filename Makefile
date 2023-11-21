@@ -5,10 +5,11 @@ proto = services/account/api
 generate: $(proto)
 
 $(proto):
-	if [[ ! -d './genproto/$@' ]]; then \
-		mkdir -p './genproto/$@'; \
+	$(eval PATH_OUT := ./genproto)
+	if [[ ! -d '${PATH_OUT}' ]]; then \
+		mkdir -p '${PATH_OUT}'; \
 	fi; \
-	protoc --go_out=./genproto/$@ --go_opt=paths=source_relative \
-		--go-grpc_out=./genproto/$@ --go-grpc_opt=paths=source_relative \
+	protoc --go_out=${PATH_OUT} --go_opt=paths=source_relative \
+		--go-grpc_out=${PATH_OUT} --go-grpc_opt=paths=source_relative \
 		$(shell find ./$@ -iname "*.proto")
 
