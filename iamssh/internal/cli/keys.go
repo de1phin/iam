@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/de1phin/iam/pkg/yccli"
+	"github.com/de1phin/iam/iamssh/pkg/yccli"
 	"github.com/spf13/cobra"
 )
 

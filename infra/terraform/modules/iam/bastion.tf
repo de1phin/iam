@@ -25,7 +25,7 @@ resource "yandex_compute_instance" "bastion" {
     initialize_params {
       size = 32
       type = "network-hdd"
-      image_id = "fd8m3j9ott9u69hks0gg"
+      image_id = module.globals.ubuntu_2204_image_id
     }
   }
 
