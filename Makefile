@@ -1,16 +1,15 @@
-.PHONY: generate
+proto = services/account/api
 
-proto = services/account/proto
+.PHONY: generate, $(proto)
 
 generate: $(proto)
 
 $(proto):
-	if [[ ! -d './pkg/gen/$@' ]]; then \
-		mkdir -p './pkg/gen/$@'; \
+	$(eval PATH_OUT := ./genproto)
+	if [[ ! -d '${PATH_OUT}' ]]; then \
+		mkdir -p '${PATH_OUT}'; \
 	fi; \
-	protoc --go_out=./pkg/gen/$@ --go_opt=paths=source_relative \
-		--go-grpc_out=./pkg/gen/$@ --go-grpc_opt=paths=source_relative \
-		$(shell find ./pkg/$@ -iname "*.proto")
-		
-	
+	protoc --go_out=${PATH_OUT} --go_opt=paths=source_relative \
+		--go-grpc_out=${PATH_OUT} --go-grpc_opt=paths=source_relative \
+		$(shell find ./$@ -iname "*.proto")
 

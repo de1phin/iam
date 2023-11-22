@@ -10,3 +10,8 @@ variable "zones" {
     D = "ru-central1-d"
   }
 }
+
+variable "ubuntu_2204_image_id" {
+  type = string
+  default = "fd8m3j9ott9u69hks0gg"
+}
