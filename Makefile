@@ -1,4 +1,4 @@
-proto = services/account/api
+proto = services/account/api services/token/api
 
 .PHONY: generate, $(proto)
 
