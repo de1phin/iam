@@ -1,0 +1,96 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "services/token/api/token-service.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "TokenStatus": {
+      "type": "string",
+      "enum": [
+        "UNDEFINED",
+        "VALID"
+      ],
+      "default": "UNDEFINED"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "tokenCheckTokenResponse": {
+      "type": "object",
+      "properties": {
+        "ssh_key": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "tokenGenerateTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/tokenToken"
+        }
+      }
+    },
+    "tokenRefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/tokenToken"
+        }
+      }
+    },
+    "tokenRemoveTokenResponse": {
+      "type": "object"
+    },
+    "tokenToken": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/TokenStatus"
+        }
+      }
+    }
+  }
+}
