@@ -22,7 +22,7 @@ message Token {
 }
 
 message GenerateTokenRequest {
-    bytes ssh_public_key = 1;
+    bytes ssh_key = 1;
 }
 
 message GenerateTokenResponse {
@@ -30,7 +30,7 @@ message GenerateTokenResponse {
 }
 
 message RefreshTokenRequest {
-    bytes ssh_public_key = 1;
+    bytes ssh_key = 1;
 }
 
 message RefreshTokenResponse {
@@ -38,7 +38,7 @@ message RefreshTokenResponse {
 }
 
 message RemoveTokenRequest {
-    bytes ssh_public_key = 1;
+    bytes ssh_key = 1;
 }
 
 message RemoveTokenResponse {}
@@ -49,5 +49,5 @@ message CheckTokenRequest {
 }
 
 message CheckTokenResponse {
-    bytes ssh_public_key = 1;
+    bytes ssh_key = 1;
 }
