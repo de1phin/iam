@@ -4,28 +4,29 @@ import (
 	"context"
 	"sync"
 
+	memcache "github.com/de1phin/iam/pkg/cache"
+
 	token_service "github.com/de1phin/iam/token/api/token"
+	"github.com/de1phin/iam/token/internal/cache"
+	"github.com/de1phin/iam/token/internal/facade"
+	"github.com/de1phin/iam/token/internal/repository"
 	"github.com/de1phin/iam/token/internal/server"
 )
 
 type connections struct {
+	memcached *memcache.Cache[string, []byte]
 }
 
 type repositories struct {
-}
-
-type providers struct {
-}
-
-type services struct {
-	token *token_service.Implementation
+	cache *cache.MemCache
+	repo  *repository.Repository
 }
 
 type application struct {
 	connections  connections
 	repositories repositories
-	providers    providers
-	services     services
+	facade       *facade.Facade
+	service      *token_service.Implementation
 
 	wg *sync.WaitGroup
 }
@@ -35,32 +36,36 @@ func newApp(ctx context.Context) *application {
 
 	a.initConnections()
 	a.initRepos()
-	a.initProviders()
+	a.initFacade()
 	a.initService()
 
 	return &a
 }
 
 func (a *application) initConnections() {
-	a.connections = connections{}
-}
+	memcached := memcache.NewCache[string, []byte]()
 
-func (a *application) initProviders() {
-	a.providers = providers{}
-}
-
-func (a *application) initService() {
-	a.services = services{
-		token: token_service.NewService(),
+	a.connections = connections{
+		memcached: memcached,
 	}
 }
 
 func (a *application) initRepos() {
-	a.repositories = repositories{}
+	a.repositories = repositories{
+		cache: cache.NewCache(a.connections.memcached),
+	}
+}
+
+func (a *application) initFacade() {
+	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo)
+}
+
+func (a *application) initService() {
+	a.service = token_service.NewService(a.facade)
 }
 
 func (a *application) Run(ctx context.Context) error {
-	server.StartTokenService(ctx, a.services.token, a.wg)
+	server.StartTokenService(ctx, a.service, a.wg)
 
 	return nil
 }

@@ -4,14 +4,23 @@ import (
 	"context"
 
 	desc "github.com/de1phin/iam/genproto/services/token/api"
+
+	"github.com/de1phin/iam/token/internal/repository"
 )
 
+type TokenRepository interface {
+}
+
 type Implementation struct {
+	tokenRepo TokenRepository
+
 	desc.UnimplementedTokenServiceServer
 }
 
-func NewService() *Implementation {
-	return &Implementation{}
+func NewService(tokenRepo repository.Database) *Implementation {
+	return &Implementation{
+		tokenRepo: tokenRepo,
+	}
 }
 
 func (i *Implementation) GenerateToken(ctx context.Context, req *desc.GenerateTokenRequest) (*desc.GenerateTokenResponse, error) {
