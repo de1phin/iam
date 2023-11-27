@@ -2,11 +2,17 @@ package cache
 
 import (
 	"context"
+	"errors"
 
 	"github.com/de1phin/iam/token/internal/model"
 )
 
+var ErrNotFound = errors.New("not found")
+
 type CoreCache interface {
+	Get(key string) ([]byte, bool)
+	Create(key string, data []byte) bool
+	Delete(key string) bool
 }
 
 type MemCache struct {

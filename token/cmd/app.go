@@ -9,6 +9,7 @@ import (
 	token_service "github.com/de1phin/iam/token/api/token"
 	"github.com/de1phin/iam/token/internal/cache"
 	"github.com/de1phin/iam/token/internal/facade"
+	"github.com/de1phin/iam/token/internal/generator"
 	"github.com/de1phin/iam/token/internal/repository"
 	"github.com/de1phin/iam/token/internal/server"
 )
@@ -23,6 +24,7 @@ type repositories struct {
 }
 
 type application struct {
+	generator    *generator.Generator
 	connections  connections
 	repositories repositories
 	facade       *facade.Facade
@@ -34,12 +36,19 @@ type application struct {
 func newApp(ctx context.Context) *application {
 	var a = application{}
 
+	a.initGenerator()
 	a.initConnections()
 	a.initRepos()
 	a.initFacade()
 	a.initService()
 
 	return &a
+}
+
+func (a *application) initGenerator() {
+	length := 512 // TODO config
+
+	a.generator = generator.NewGenerator(length)
 }
 
 func (a *application) initConnections() {
@@ -57,7 +66,7 @@ func (a *application) initRepos() {
 }
 
 func (a *application) initFacade() {
-	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo)
+	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator)
 }
 
 func (a *application) initService() {
