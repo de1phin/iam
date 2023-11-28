@@ -29,14 +29,18 @@ func (c *MemCache) GenerateToken(ctx context.Context) (*model.Token, error) {
 	return nil, nil
 }
 
-func (c *MemCache) RefreshToken(ctx context.Context) (*model.Token, error) {
-	return nil, nil
+func (c *MemCache) GetToken(ctx context.Context, ssh string) (string, error) {
+	return "", nil
 }
 
-func (c *MemCache) DeleteToken(ctx context.Context) error {
+func (c *MemCache) SetToken(ctx context.Context, ssh string, token string) error {
 	return nil
 }
 
-func (c *MemCache) CheckToken(context.Context) (bool, error) {
+func (c *MemCache) GetExist(ctx context.Context, token string) (bool, error) {
 	return false, nil
+}
+
+func (c *MemCache) SetExist(ctx context.Context, token string, isExist bool) error {
+	return nil
 }

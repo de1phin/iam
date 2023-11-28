@@ -19,18 +19,22 @@ func New(conn Database) *Repository {
 	}
 }
 
-func (c *Repository) GenerateToken(ctx context.Context) (*model.Token, error) {
+func (r *Repository) GenerateToken(ctx context.Context) (*model.Token, error) {
 	return nil, nil
 }
 
-func (c *Repository) RefreshToken(ctx context.Context) (*model.Token, error) {
-	return nil, nil
+func (r *Repository) GetToken(ctx context.Context, ssh string) (string, error) {
+	return "", nil
 }
 
-func (c *Repository) DeleteToken(ctx context.Context) error {
+func (r *Repository) SetToken(ctx context.Context, ssh string, token string) error {
 	return nil
 }
 
-func (c *Repository) CheckToken(context.Context) (bool, error) {
+func (r *Repository) GetExist(ctx context.Context, token string) (bool, error) {
 	return false, nil
+}
+
+func (r *Repository) SetExist(ctx context.Context, token string, isExist bool) error {
+	return nil
 }
