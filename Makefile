@@ -1,4 +1,4 @@
-proto = services/account/api
+proto = services/account/api services/token/api
 
 .PHONY: generate, $(proto)
 
@@ -11,5 +11,6 @@ $(proto):
 	fi; \
 	protoc --go_out=${PATH_OUT} --go_opt=paths=source_relative \
 		--go-grpc_out=${PATH_OUT} --go-grpc_opt=paths=source_relative \
+		--swagger_out=${PATH_OUT} \
+		--swagger_opt=logtostderr=true \
 		$(shell find ./$@ -iname "*.proto")
-

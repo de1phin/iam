@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package iam.services.token;
+
+option go_package = "./token";
+
+service TokenService {
+    rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse);
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+    rpc DeleteToken(RemoveTokenRequest) returns (RemoveTokenResponse);
+
+    rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
+}
+
+message Token {
+    enum Status {
+        UNDEFINED = 0;
+        VALID = 1;
+    }
+    string token = 1;
+    Status status = 2;
+}
+
+message GenerateTokenRequest {
+    bytes ssh_key = 1;
+}
+
+message GenerateTokenResponse {
+    Token token = 1;
+}
+
+message RefreshTokenRequest {
+    bytes ssh_key = 1;
+}
+
+message RefreshTokenResponse {
+    Token token = 1;
+}
+
+message RemoveTokenRequest {
+    bytes ssh_key = 1;
+}
+
+message RemoveTokenResponse {}
+
+message CheckTokenRequest {
+    Token token = 1;
+    string account_id = 2;
+}
+
+message CheckTokenResponse {
+    bytes ssh_key = 1;
+}
