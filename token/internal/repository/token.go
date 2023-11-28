@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-
-	"github.com/de1phin/iam/token/internal/model"
 )
 
 type Database interface {
@@ -17,10 +15,6 @@ func New(conn Database) *Repository {
 	return &Repository{
 		conn: conn,
 	}
-}
-
-func (r *Repository) GenerateToken(ctx context.Context) (*model.Token, error) {
-	return nil, nil
 }
 
 func (r *Repository) GetToken(ctx context.Context, ssh string) (string, error) {
