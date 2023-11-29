@@ -25,6 +25,10 @@ func (r *Repository) SetToken(ctx context.Context, ssh string, token string) err
 	return nil
 }
 
+func (r *Repository) DeleteToken(ctx context.Context, ssh string) error {
+	return nil
+}
+
 func (r *Repository) GetExist(ctx context.Context, token string) (bool, error) {
 	return false, nil
 }

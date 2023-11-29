@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -34,7 +36,10 @@ type TokenValue struct {
 	Token string
 }
 
-func (c *MemCache) GetToken(_ context.Context, ssh string) (string, error) {
+func (c *MemCache) GetToken(ctx context.Context, ssh string) (string, error) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/GetToken")
+	defer span.Finish()
+
 	key, err := marshalStruct(&TokenKey{Ssh: ssh})
 	if err != nil {
 		return "", err
@@ -53,7 +58,10 @@ func (c *MemCache) GetToken(_ context.Context, ssh string) (string, error) {
 	return tokenValue.Token, nil
 }
 
-func (c *MemCache) SetToken(_ context.Context, ssh string, token string) error {
+func (c *MemCache) SetToken(ctx context.Context, ssh string, token string) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetToken")
+	defer span.Finish()
+
 	key, value, err := marshalKeyValue(&TokenKey{Ssh: ssh}, &TokenValue{Token: token})
 	if err != nil {
 		return err
@@ -67,6 +75,20 @@ func (c *MemCache) SetToken(_ context.Context, ssh string, token string) error {
 	return nil
 }
 
+func (c *MemCache) DeleteToken(ctx context.Context, ssh string) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetToken")
+	defer span.Finish()
+
+	key, err := marshalStruct(&TokenKey{Ssh: ssh})
+	if err != nil {
+		return err
+	}
+
+	c.conn.Delete(string(key))
+
+	return nil
+}
+
 type ExistKey struct {
 	Token string
 }
@@ -75,7 +97,10 @@ type ExistValue struct {
 	IsExist bool
 }
 
-func (c *MemCache) GetExist(_ context.Context, token string) (bool, error) {
+func (c *MemCache) GetExist(ctx context.Context, token string) (bool, error) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/GetExist")
+	defer span.Finish()
+
 	key, err := marshalStruct(&ExistKey{Token: token})
 	if err != nil {
 		return false, err
@@ -94,7 +119,10 @@ func (c *MemCache) GetExist(_ context.Context, token string) (bool, error) {
 	return existValue.IsExist, nil
 }
 
-func (c *MemCache) SetExist(_ context.Context, token string, isExist bool) error {
+func (c *MemCache) SetExist(ctx context.Context, token string, isExist bool) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetExist")
+	defer span.Finish()
+
 	key, value, err := marshalKeyValue(&ExistKey{Token: token}, &ExistValue{IsExist: isExist})
 	if err != nil {
 		return err
