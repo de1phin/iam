@@ -20,7 +20,7 @@ func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *s
 	token.RegisterTokenServiceServer(server, serv)
 
 	go func() {
-		logger.Info("sender server is begin")
+		logger.Info("token-service start")
 		defer wg.Done()
 
 		go func() {
@@ -32,7 +32,7 @@ func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *s
 		<-ctx.Done()
 		server.GracefulStop()
 
-		logger.Info("sender server is end")
+		logger.Info("sender server stop")
 	}()
 	return
 }
