@@ -1,4 +1,4 @@
-package server_test
+package service_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
 	"github.com/de1phin/iam/services/account/internal/database/cache"
-	"github.com/de1phin/iam/services/account/internal/server"
+	"github.com/de1phin/iam/services/account/internal/service"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/ssh"
 )
@@ -36,7 +36,7 @@ func init() {
 }
 
 func TestInvalidSshKey(t *testing.T) {
-	s := server.NewServer()
+	s := service.NewAccountService()
 
 	resp, err := s.Authenticate(context.Background(), &account.AuthenticateRequest{
 		SshKey: []byte("bibaboba"),
@@ -48,9 +48,9 @@ func TestInvalidSshKey(t *testing.T) {
 }
 
 func TestUnauthenticated(t *testing.T) {
-	s := server.NewServer(
-		server.AccountDatabase(cache.NewAccountCache()),
-		server.SshKeyDatabase(cache.NewSshKeyCache()),
+	s := service.NewAccountService(
+		service.AccountDatabase(cache.NewAccountCache()),
+		service.SshKeyDatabase(cache.NewSshKeyCache()),
 	)
 
 	resp, err := s.Authenticate(context.Background(), &account.AuthenticateRequest{
@@ -65,9 +65,9 @@ func TestUnauthenticated(t *testing.T) {
 func TestOK(t *testing.T) {
 	accounts := cache.NewAccountCache()
 	sshKeys := cache.NewSshKeyCache()
-	s := server.NewServer(
-		server.AccountDatabase(accounts),
-		server.SshKeyDatabase(sshKeys),
+	s := service.NewAccountService(
+		service.AccountDatabase(accounts),
+		service.SshKeyDatabase(sshKeys),
 	)
 
 	const accountId = "tima15654655"
@@ -76,7 +76,7 @@ func TestOK(t *testing.T) {
 	}))
 	assert.NoError(t, sshKeys.Create(&account.SshKey{
 		AccountId:   accountId,
-		Fingerprint: server.GetFingerprint(sshPubKey),
+		Fingerprint: service.GetFingerprint(sshPubKey),
 		PublicKey:   sshPubKey.Marshal(),
 	}))
 

@@ -1,4 +1,4 @@
-package server
+package service
 
 import "golang.org/x/crypto/ssh"
 

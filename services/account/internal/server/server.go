@@ -1,32 +1,70 @@
 package server
 
-import "github.com/de1phin/iam/services/account/internal/database"
+import (
+	"crypto/tls"
+	"fmt"
+	"log"
+	"net"
+	"time"
+
+	account "github.com/de1phin/iam/genproto/services/account/api"
+	"github.com/de1phin/iam/services/account/internal/service"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
+)
+
+type AccountServiceServerConfig struct {
+	AccountService *service.AccountService
+	// logger
+	Address           string
+	ConnectionTimeout time.Duration
+	TlsCertificate    *tls.Certificate
+}
+
+func (cfg *AccountServiceServerConfig) getGrpcServerOptions() []grpc.ServerOption {
+	opts := []grpc.ServerOption{}
+
+	if cfg.ConnectionTimeout != 0 {
+		opts = append(opts, grpc.ConnectionTimeout(cfg.ConnectionTimeout))
+	}
+
+	if cfg.TlsCertificate != nil {
+		c := credentials.NewServerTLSFromCert(cfg.TlsCertificate)
+		opts = append(opts, grpc.Creds(c))
+	}
+
+	return opts
+}
 
 type Server struct {
-	accounts database.AccountDatabase
-	sshKeys  database.SshKeyDatabase
+	gprcServer *grpc.Server
 }
 
-type ServerOpt func(*Server)
-
-func NewServer(opts ...ServerOpt) *Server {
-	server := &Server{}
-
-	for _, opt := range opts {
-		opt(server)
+func (cfg *AccountServiceServerConfig) RunServer() (*Server, error) {
+	listener, err := net.Listen("tcp", cfg.Address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to listen tcp: %w", err)
 	}
 
-	return server
+	grpcServer := grpc.NewServer(cfg.getGrpcServerOptions()...)
+	account.RegisterAccountServiceServer(grpcServer, cfg.AccountService)
+	reflection.Register(grpcServer)
+
+	srv := &Server{
+		gprcServer: grpcServer,
+	}
+
+	go func() {
+		err := grpcServer.Serve(listener)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	return srv, nil
 }
 
-func AccountDatabase(db database.AccountDatabase) ServerOpt {
-	return func(s *Server) {
-		s.accounts = db
-	}
-}
-
-func SshKeyDatabase(db database.SshKeyDatabase) ServerOpt {
-	return func(s *Server) {
-		s.sshKeys = db
-	}
+func (s *Server) Shutdown() {
+	s.gprcServer.GracefulStop()
 }

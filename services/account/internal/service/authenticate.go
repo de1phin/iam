@@ -1,4 +1,4 @@
-package server
+package service
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Server) Authenticate(_ context.Context, req *account.AuthenticateRequest) (*account.AuthenticateResponse, error) {
+func (s *AccountService) Authenticate(_ context.Context, req *account.AuthenticateRequest) (*account.AuthenticateResponse, error) {
 	signer, err := ssh.ParsePrivateKey(req.GetSshKey())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "Failed to parse ssh key")
