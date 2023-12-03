@@ -27,7 +27,7 @@ func (w *AccountWrapper) Authenticate(ctx context.Context, ssh []byte) (string, 
 	defer span.Finish()
 
 	req := &pb.AuthenticateRequest{
-		SshPublicKey: ssh,
+		SshKey: ssh,
 	}
 
 	resp, err := w.cl.Authenticate(ctx, req)
