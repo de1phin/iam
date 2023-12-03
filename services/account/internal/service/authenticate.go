@@ -7,14 +7,18 @@ import (
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
 	"github.com/de1phin/iam/services/account/internal/database"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 func (s *AccountService) Authenticate(_ context.Context, req *account.AuthenticateRequest) (*account.AuthenticateResponse, error) {
+	logger := s.logger.Named("Authenticate")
+
 	signer, err := ssh.ParsePrivateKey(req.GetSshKey())
 	if err != nil {
+		logger.Debug("Ssh Key parsing failed", zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "Failed to parse ssh key")
 	}
 
@@ -26,6 +30,7 @@ func (s *AccountService) Authenticate(_ context.Context, req *account.Authentica
 		return nil, status.Error(codes.Unauthenticated, "Unauthenticated")
 	}
 	if err != nil {
+		logger.Error("Internal Error on SshKeyDatabase.Get", zap.Error(err))
 		return nil, status.Error(codes.Internal, "")
 	}
 
