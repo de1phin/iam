@@ -73,7 +73,8 @@ func (a *application) initRepos() {
 }
 
 func (a *application) initFacade() {
-	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator)
+	onlyCacheMod := true
+	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, onlyCacheMod)
 }
 
 func (a *application) initService() {

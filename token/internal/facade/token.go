@@ -13,8 +13,6 @@ import (
 	"github.com/de1phin/iam/token/internal/model"
 )
 
-const onlyCache = true
-
 type Cache interface {
 	GetToken(ctx context.Context, ssh string) (string, error)
 	SetToken(ctx context.Context, ssh string, token string) error
@@ -40,13 +38,15 @@ type Facade struct {
 	cache     Cache
 	repo      Repository
 	generator Generator
+	onlyCache bool
 }
 
-func NewFacade(cache Cache, repo Repository, generator Generator) *Facade {
+func NewFacade(cache Cache, repo Repository, generator Generator, onlyCacheMod bool) *Facade {
 	return &Facade{
 		cache:     cache,
 		repo:      repo,
 		generator: generator,
+		onlyCache: onlyCacheMod,
 	}
 }
 
@@ -54,7 +54,7 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GenerateToken")
 	defer span.Finish()
 
-	if onlyCache {
+	if f.onlyCache {
 		var isNotFound bool
 
 		token, err := f.cache.GetToken(ctx, ssh)
@@ -98,7 +98,7 @@ func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, er
 
 	token := f.generator.Generate()
 
-	if onlyCache {
+	if f.onlyCache {
 		if err := f.cache.SetToken(ctx, ssh, token); err != nil {
 			return nil, err
 		}
@@ -127,7 +127,7 @@ func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/DeleteToken")
 	defer span.Finish()
 
-	if onlyCache {
+	if f.onlyCache {
 		token, err := f.cache.GetToken(ctx, ssh)
 		if err != nil {
 			return err
@@ -153,7 +153,7 @@ func (f *Facade) CheckToken(ctx context.Context, tk model.Token) (bool, error) {
 
 	token := tk.Token
 
-	if onlyCache {
+	if f.onlyCache {
 		isExist, err := f.cache.GetExist(ctx, token)
 		if err != nil {
 			if errors.Is(err, cache.ErrNotFound) {
