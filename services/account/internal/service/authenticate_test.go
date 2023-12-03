@@ -2,9 +2,6 @@ package service_test
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"encoding/pem"
 	"testing"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
@@ -20,19 +17,7 @@ var (
 )
 
 func init() {
-	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		panic(err)
-	}
-	sshPubKey, err = ssh.NewPublicKey(&rsaKey.PublicKey)
-	if err != nil {
-		panic(err)
-	}
-	block, err := ssh.MarshalPrivateKey(rsaKey, "")
-	if err != nil {
-		panic(err)
-	}
-	sshKey = pem.EncodeToMemory(block)
+	sshKey, sshPubKey = mustGenerateSshKey()
 }
 
 func TestInvalidSshKey(t *testing.T) {

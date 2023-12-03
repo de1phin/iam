@@ -26,7 +26,6 @@ const (
 
 	AccountNameFieldName = "name"
 	AccountDescFieldName = "description"
-	AccoundIdFieldName   = "id"
 )
 
 func generateNewId() string {
@@ -51,7 +50,7 @@ func (s *AccountService) generateNewUniqueId(ctx context.Context) (string, error
 		if err == nil {
 			continue
 		}
-		if errors.Is(err, database.ErrAlreadyExists{}) {
+		if errors.Is(err, database.ErrNotExist{}) {
 			return id, nil
 		}
 		return "", err
@@ -73,9 +72,13 @@ func (s *AccountService) validateNewAccount(acc *account.Account) error {
 			return status.Error(codes.InvalidArgument, "ID contains invalid symbol")
 		}
 	}
+
 	_, err := s.accounts.Get(acc.GetId())
-	if errors.Is(err, database.ErrAlreadyExists{}) {
+	if err == nil {
 		return status.Error(codes.AlreadyExists, "account with specified id already exists")
+	}
+	if err != nil && !errors.Is(err, database.ErrNotExist{}) {
+		return ErrorInternal()
 	}
 
 	return validateAccountFields(acc)
@@ -142,9 +145,6 @@ func (s *AccountService) DeleteAccount(_ context.Context, req *account.DeleteAcc
 
 func updateAccountFields(acc *account.Account, req *account.UpdateAccountRequest) error {
 	paths := req.GetUpdateMask().GetPaths()
-	if stringutil.SliceContains(paths, AccoundIdFieldName) {
-		return status.Error(codes.InvalidArgument, "ID cannot be updated")
-	}
 	if stringutil.SliceContains(paths, AccountNameFieldName) {
 		acc.Name = req.GetName()
 	}
@@ -174,6 +174,10 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 	}
 
 	err = s.accounts.Update(acc)
+	if err != nil {
+		return nil, ErrorInternal()
+	}
+
 	return &account.UpdateAccountResponse{
 		Account: acc,
 	}, nil

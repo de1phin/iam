@@ -18,3 +18,7 @@ func ErrorAccountNotFound(id string) error {
 func ErrorInternal() error {
 	return status.Error(codes.Internal, "internal error")
 }
+
+func ErrorAlreadyExists(obj string) error {
+	return status.Error(codes.AlreadyExists, obj+" already exists")
+}

@@ -12,6 +12,82 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
+func TestCreateAccountWithInvalidID(t *testing.T) {
+	accounts := cache.NewAccountCache()
+	accountService := service.NewAccountService(
+		service.AccountDatabase(accounts),
+	)
+
+	const accountName = "test-account"
+	ctx := context.Background()
+	// invalid symbols
+	resp, err := accountService.CreateAccount(ctx, &account.CreateAccountRequest{
+		WellKnownId: "41234@#$%^*",
+		Name:        accountName,
+	})
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "InvalidArgument")
+	assert.Nil(t, resp)
+
+	const accountId = "test.account"
+	// valid create
+	resp, err = accountService.CreateAccount(ctx, &account.CreateAccountRequest{
+		WellKnownId: accountId,
+		Name:        accountName,
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, accountId, resp.GetAccount().GetId())
+
+	// id already in use
+	resp, err = accountService.CreateAccount(ctx, &account.CreateAccountRequest{
+		WellKnownId: accountId,
+		Name:        accountName,
+	})
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "AlreadyExists")
+	assert.Nil(t, resp)
+}
+
+func TestCreateAccountWithInvalidName(t *testing.T) {
+	accountService := service.NewAccountService(
+		service.AccountDatabase(cache.NewAccountCache()),
+	)
+
+	ctx := context.Background()
+	accountName := ""
+
+	resp, err := accountService.CreateAccount(ctx, &account.CreateAccountRequest{
+		Name: accountName,
+	})
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "InvalidArgument")
+	assert.Nil(t, resp)
+
+	nameLen := (service.NameMinLength + service.NameMaxLength) / 2
+	for len(accountName) < nameLen {
+		accountName += "a"
+	}
+
+	resp, err = accountService.CreateAccount(ctx, &account.CreateAccountRequest{
+		Name: accountName,
+	})
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.Equal(t, accountName, resp.GetAccount().GetName())
+
+	nameLen = service.NameMaxLength + 1
+	for len(accountName) < nameLen {
+		accountName += "a"
+	}
+	resp, err = accountService.CreateAccount(ctx, &account.CreateAccountRequest{
+		Name: accountName,
+	})
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "InvalidArgument")
+	assert.Nil(t, resp)
+}
+
 func TestAccountCRUD(t *testing.T) {
 	accounts := cache.NewAccountCache()
 	accountService := service.NewAccountService(
