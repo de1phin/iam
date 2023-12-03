@@ -1,13 +1,14 @@
+//go:generate mockery --case=underscore --name Cache --with-expecter=true
+//go:generate mockery --case=underscore --name Repository --with-expecter=true
+//go:generate mockery --case=underscore --name Generator --with-expecter=true
+
 package facade
 
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/de1phin/iam/pkg/logger"
 	"github.com/opentracing/opentracing-go"
-	"go.uber.org/zap"
 
 	"github.com/de1phin/iam/token/internal/cache"
 	"github.com/de1phin/iam/token/internal/model"
@@ -18,8 +19,9 @@ type Cache interface {
 	SetToken(ctx context.Context, ssh string, token string) error
 	DeleteToken(ctx context.Context, ssh string) error
 
-	GetExist(ctx context.Context, token string) (bool, error)
-	SetExist(ctx context.Context, token string, isExist bool) error
+	GetSsh(ctx context.Context, token string) (string, error)
+	SetSsh(ctx context.Context, token string, ssh string) error
+	DeleteSsh(ctx context.Context, ssh string) error
 }
 
 type Repository interface {
@@ -27,7 +29,7 @@ type Repository interface {
 	SetToken(ctx context.Context, ssh string, token string) error
 	DeleteToken(ctx context.Context, ssh string) error
 
-	GetExist(ctx context.Context, token string) (bool, error)
+	GetSsh(ctx context.Context, token string) (string, error)
 }
 
 type Generator interface {
@@ -66,12 +68,12 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 		}
 
 		if !isNotFound {
-			isExist, err := f.cache.GetExist(ctx, token)
+			cacheSsh, err := f.cache.GetSsh(ctx, token)
 			if err != nil {
 				return nil, err
 			}
 
-			if isExist {
+			if cacheSsh != "" {
 				return convertToModelToken(token), err
 			}
 		}
@@ -81,7 +83,7 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 		if err = f.cache.SetToken(ctx, ssh, token); err != nil {
 			return nil, err
 		}
-		if err = f.cache.SetExist(ctx, token, true); err != nil {
+		if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
 			return nil, err
 		}
 		return convertToModelToken(token), nil
@@ -102,25 +104,27 @@ func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, er
 		if err := f.cache.SetToken(ctx, ssh, token); err != nil {
 			return nil, err
 		}
-		if err := f.cache.SetExist(ctx, token, true); err != nil {
+		if err := f.cache.SetSsh(ctx, token, ssh); err != nil {
 			return nil, err
 		}
 		return convertToModelToken(token), nil
 	}
 
-	if err := f.cache.SetToken(ctx, ssh, token); err != nil {
-		logger.Error("cache SetToken", zap.Error(err))
-	}
+	//if err := f.cache.SetToken(ctx, ssh, token); err != nil {
+	//	logger.Error("cache SetToken", zap.Error(err))
+	//}
+	//
+	//if err := f.cache.SetSsh(ctx, token, ssh); err != nil {
+	//	logger.Error("cache SetToken", zap.Error(err))
+	//}
+	//
+	//if err := f.repo.SetToken(ctx, ssh, token); err != nil {
+	//	return nil, err
+	//}
+	//
+	//return convertToModelToken(token), nil
 
-	if err := f.cache.SetExist(ctx, token, true); err != nil {
-		logger.Error("cache SetToken", zap.Error(err))
-	}
-
-	if err := f.repo.SetToken(ctx, ssh, token); err != nil {
-		return nil, err
-	}
-
-	return convertToModelToken(token), nil
+	return nil, nil
 }
 
 func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
@@ -137,50 +141,48 @@ func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
 			return err
 		}
 
-		return f.cache.SetExist(ctx, token, false)
+		return f.cache.DeleteSsh(ctx, token)
 	}
 
-	if err := f.cache.DeleteToken(ctx, ssh); err != nil {
-		logger.Error("cache DeleteToken", zap.Error(err))
-	}
+	//if err := f.cache.DeleteToken(ctx, ssh); err != nil {
+	//	logger.Error("cache DeleteToken", zap.Error(err))
+	//}
+	//
+	//return f.repo.DeleteToken(ctx, ssh)
 
-	return f.repo.DeleteToken(ctx, ssh)
+	return nil
 }
 
-func (f *Facade) CheckToken(ctx context.Context, tk model.Token) (bool, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/CheckToken")
+func (f *Facade) GetSshByToken(ctx context.Context, tk model.Token) (string, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GetSshByToken")
 	defer span.Finish()
 
 	token := tk.Token
 
 	if f.onlyCache {
-		isExist, err := f.cache.GetExist(ctx, token)
-		if err != nil {
-			if errors.Is(err, cache.ErrNotFound) {
-				return false, nil
-			}
-		}
-		return isExist, err
+		return f.cache.GetSsh(ctx, token)
 	}
 
-	isExist, err := f.cache.GetExist(ctx, token)
-	if err == nil {
-		return isExist, nil
-	}
-	if !errors.Is(err, cache.ErrNotFound) {
-		logger.Error("cache GetExist", zap.Error(err))
-	}
+	//ssh, err := f.cache.GetSsh(ctx, token)
+	//if err == nil {
+	//	return ssh, nil
+	//}
+	//if ssh == "" {
+	//	logger.Error("cache GetExist", zap.Error(err))
+	//}
+	//
+	//ssh, err = f.repo.GetSsh(ctx, token)
+	//if err != nil {
+	//	return "", fmt.Errorf("repo GetExist: %w", err)
+	//}
+	//
+	//if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+	//	logger.Error("cache SetExist", zap.Error(err))
+	//}
+	//
+	//return ssh, nil
 
-	isExist, err = f.repo.GetExist(ctx, token)
-	if err != nil {
-		return false, fmt.Errorf("repo GetExist: %w", err)
-	}
-
-	if err = f.cache.SetExist(ctx, token, isExist); err != nil {
-		logger.Error("cache SetExist", zap.Error(err))
-	}
-
-	return isExist, nil
+	return "", nil
 }
 
 func convertToModelToken(token string) *model.Token {

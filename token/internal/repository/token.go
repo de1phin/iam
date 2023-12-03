@@ -29,10 +29,10 @@ func (r *Repository) DeleteToken(ctx context.Context, ssh string) error {
 	return nil
 }
 
-func (r *Repository) GetExist(ctx context.Context, token string) (bool, error) {
-	return false, nil
+func (r *Repository) GetSsh(ctx context.Context, token string) (string, error) {
+	return "", nil
 }
 
-func (r *Repository) SetExist(ctx context.Context, token string, isExist bool) error {
+func (r *Repository) SetSsh(ctx context.Context, token string, ssh string) error {
 	return nil
 }

@@ -12,13 +12,13 @@ service TokenService {
     rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse);
 }
 
+enum TokenStatus {
+    UNDEFINED = 0;
+    VALID = 1;
+}
 message Token {
-    enum Status {
-        UNDEFINED = 0;
-        VALID = 1;
-    }
     string token = 1;
-    Status status = 2;
+    TokenStatus status = 2;
 }
 
 message GenerateTokenRequest {
@@ -45,9 +45,9 @@ message RemoveTokenResponse {}
 
 message CheckTokenRequest {
     Token token = 1;
-    string account_id = 2;
 }
 
 message CheckTokenResponse {
-    bytes ssh_key = 1;
+    string user_id = 1;
+    TokenStatus status = 2;
 }

@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,16 +13,38 @@ func Test(t *testing.T) {
 	var (
 		g                 = NewGenerator(512)
 		amountGenerations = 1_000_000
-		set               = make(map[string]bool, amountGenerations)
+		amountTests       = 5
+		globalSet         = make(map[string]bool, amountGenerations*amountTests)
+		mu                = &sync.Mutex{}
+		wg                = &sync.WaitGroup{}
 	)
 
-	for i := 0; i < amountGenerations; i++ {
-		token := g.Generate()
+	for i := 0; i < amountTests; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		if set[token] {
-			assert.Fail(t, "failed unique")
-		}
+			var localSet = make(map[string]bool, amountGenerations)
+			for j := 0; j < amountGenerations; j++ {
+				token := g.Generate()
 
-		set[token] = true
+				if localSet[token] {
+					assert.Fail(t, "failed unique")
+				}
+
+				localSet[token] = true
+			}
+
+			mu.Lock()
+			for token := range localSet {
+				if _, ok := globalSet[token]; ok {
+					assert.Fail(t, "failed unique")
+				}
+				globalSet[token] = true
+			}
+			mu.Unlock()
+		}()
 	}
+
+	wg.Wait()
 }

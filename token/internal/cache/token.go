@@ -76,7 +76,7 @@ func (c *MemCache) SetToken(ctx context.Context, ssh string, token string) error
 }
 
 func (c *MemCache) DeleteToken(ctx context.Context, ssh string) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetToken")
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/DeleteToken")
 	defer span.Finish()
 
 	key, err := marshalStruct(&TokenKey{Ssh: ssh})
@@ -89,41 +89,41 @@ func (c *MemCache) DeleteToken(ctx context.Context, ssh string) error {
 	return nil
 }
 
-type ExistKey struct {
+type SshKey struct {
 	Token string
 }
 
-type ExistValue struct {
-	IsExist bool
+type SshValue struct {
+	Ssh string
 }
 
-func (c *MemCache) GetExist(ctx context.Context, token string) (bool, error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "cache/GetExist")
+func (c *MemCache) GetSsh(ctx context.Context, token string) (string, error) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/GetSsh")
 	defer span.Finish()
 
-	key, err := marshalStruct(&ExistKey{Token: token})
+	key, err := marshalStruct(&SshKey{Token: token})
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	value, exist := c.conn.Get(string(key))
 	if !exist {
-		return false, nil
+		return "", nil
 	}
 
-	var existValue ExistValue
+	var existValue SshValue
 	if err = json.Unmarshal(value, &existValue); err != nil {
-		return false, fmt.Errorf("json.Unmarshal: %w", err)
+		return "", fmt.Errorf("json.Unmarshal: %w", err)
 	}
 
-	return existValue.IsExist, nil
+	return existValue.Ssh, nil
 }
 
-func (c *MemCache) SetExist(ctx context.Context, token string, isExist bool) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetExist")
+func (c *MemCache) SetSsh(ctx context.Context, token string, ssh string) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetSsh")
 	defer span.Finish()
 
-	key, value, err := marshalKeyValue(&ExistKey{Token: token}, &ExistValue{IsExist: isExist})
+	key, value, err := marshalKeyValue(&SshKey{Token: token}, &SshValue{Ssh: ssh})
 	if err != nil {
 		return err
 	}
@@ -132,6 +132,20 @@ func (c *MemCache) SetExist(ctx context.Context, token string, isExist bool) err
 	if isCreated {
 		c.conn.Update(string(key), value)
 	}
+
+	return nil
+}
+
+func (c *MemCache) DeleteSsh(ctx context.Context, token string) error {
+	span, _ := opentracing.StartSpanFromContext(ctx, "cache/DeleteSsh")
+	defer span.Finish()
+
+	key, err := marshalStruct(&SshKey{Token: token})
+	if err != nil {
+		return err
+	}
+
+	c.conn.Delete(string(key))
 
 	return nil
 }

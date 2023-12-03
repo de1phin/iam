@@ -7,12 +7,15 @@ import (
 	"sync"
 	"syscall"
 
+	account "github.com/de1phin/iam/genproto/services/account/api"
 	memcache "github.com/de1phin/iam/pkg/cache"
 	"github.com/de1phin/iam/pkg/logger"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 
 	token_service "github.com/de1phin/iam/token/api/token"
 	"github.com/de1phin/iam/token/internal/cache"
+	"github.com/de1phin/iam/token/internal/client"
 	"github.com/de1phin/iam/token/internal/facade"
 	"github.com/de1phin/iam/token/internal/generator"
 	"github.com/de1phin/iam/token/internal/repository"
@@ -28,8 +31,13 @@ type repositories struct {
 	repo  *repository.Repository
 }
 
+type clients struct {
+	account *client.AccountWrapper
+}
+
 type application struct {
 	generator    *generator.Generator
+	clients      clients
 	connections  connections
 	repositories repositories
 	facade       *facade.Facade
@@ -43,6 +51,7 @@ func newApp(ctx context.Context) *application {
 		wg: &sync.WaitGroup{},
 	}
 
+	a.initClients(ctx)
 	a.initGenerator()
 	a.initConnections()
 	a.initRepos()
@@ -50,6 +59,16 @@ func newApp(ctx context.Context) *application {
 	a.initService()
 
 	return &a
+}
+
+func (a *application) initClients(ctx context.Context) {
+	host := "account-service" // TODO
+	conn, err := grpc.DialContext(ctx, host)
+	if err != nil {
+		logger.Fatal("connect to account-service", zap.Error(err))
+	}
+
+	a.clients.account = client.NewAccountWrapper(account.NewAccountServiceClient(conn))
 }
 
 func (a *application) initGenerator() {
@@ -78,7 +97,7 @@ func (a *application) initFacade() {
 }
 
 func (a *application) initService() {
-	a.service = token_service.NewService(a.facade)
+	a.service = token_service.NewService(a.facade, a.clients.account)
 }
 
 func (a *application) Run(ctx context.Context) error {
