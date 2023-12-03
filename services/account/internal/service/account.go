@@ -10,6 +10,8 @@ import (
 	account "github.com/de1phin/iam/genproto/services/account/api"
 	"github.com/de1phin/iam/pkg/stringutil"
 	"github.com/de1phin/iam/services/account/internal/database"
+	"github.com/de1phin/iam/services/account/pkg/ctxlog"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -40,6 +42,7 @@ func (s *AccountService) generateNewUniqueId(ctx context.Context) (string, error
 	for {
 		select {
 		case <-ctx.Done():
+			ctxlog.Logger(ctx).Warn("generateNewUniqueId canceled")
 			return "", ctx.Err()
 		default:
 			break
@@ -85,14 +88,18 @@ func (s *AccountService) validateNewAccount(acc *account.Account) error {
 }
 
 func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateAccountRequest) (*account.CreateAccountResponse, error) {
+	logger := s.logger.Named("CreateAccount")
+
 	var err error
 	id := req.GetWellKnownId()
 	if id == "" {
-		id, err = s.generateNewUniqueId(ctx)
+		id, err = s.generateNewUniqueId(ctxlog.ContextWithLogger(ctx, logger))
 		if err != nil {
+			logger.Error("generateNewUniqueId failed", zap.Error(err))
 			return nil, ErrorInternal()
 		}
 	}
+	logger = logger.With(zap.String("account_id", id))
 
 	acc := &account.Account{
 		Id:          id,
@@ -108,6 +115,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 
 	err = s.accounts.Create(acc)
 	if err != nil {
+		logger.Error("Internal Error on AccountDatabase.Create", zap.Error(err))
 		return nil, ErrorInternal()
 	}
 	return &account.CreateAccountResponse{
@@ -116,6 +124,8 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 }
 
 func (s *AccountService) GetAccount(_ context.Context, req *account.GetAccountRequest) (*account.GetAccountResponse, error) {
+	logger := s.logger.Named("GetAccount").With(zap.String("account_id", req.GetAccountId()))
+
 	acc, err := s.accounts.Get(req.GetAccountId())
 	if err == nil {
 		return &account.GetAccountResponse{
@@ -127,10 +137,13 @@ func (s *AccountService) GetAccount(_ context.Context, req *account.GetAccountRe
 		return nil, ErrorAccountNotFound(req.GetAccountId())
 	}
 
+	logger.Error("Internal Error on AccountDatabase.Get", zap.Error(err))
 	return nil, ErrorInternal()
 }
 
 func (s *AccountService) DeleteAccount(_ context.Context, req *account.DeleteAccountRequest) (*account.DeleteAccountResponse, error) {
+	logger := s.logger.Named("DeleteAccount").With(zap.String("account_id", req.GetAccountId()))
+
 	err := s.accounts.Delete(req.GetAccountId())
 	if err == nil {
 		return &account.DeleteAccountResponse{}, nil
@@ -140,6 +153,7 @@ func (s *AccountService) DeleteAccount(_ context.Context, req *account.DeleteAcc
 		return nil, ErrorAccountNotFound(req.GetAccountId())
 	}
 
+	logger.Error("Internal Error on AccountDatabase.Delete", zap.Error(err))
 	return nil, ErrorInternal()
 }
 
@@ -155,11 +169,16 @@ func updateAccountFields(acc *account.Account, req *account.UpdateAccountRequest
 }
 
 func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAccountRequest) (*account.UpdateAccountResponse, error) {
+	logger := s.logger.Named("UpdateAccount").
+		With(zap.String("account_id", req.GetAccountId())).
+		With(zap.Strings("update_mask", req.GetUpdateMask().GetPaths()))
+
 	acc, err := s.accounts.Get(req.GetAccountId())
 	if errors.Is(err, database.ErrNotExist{}) {
 		return nil, ErrorAccountNotFound(req.GetAccountId())
 	}
 	if err != nil {
+		logger.Error("Internal Error on AccountDatabase.Get", zap.Error(err))
 		return nil, ErrorInternal()
 	}
 
@@ -175,6 +194,7 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 
 	err = s.accounts.Update(acc)
 	if err != nil {
+		logger.Error("Internal Error on AccountDatabase.Update", zap.Error(err))
 		return nil, ErrorInternal()
 	}
 
