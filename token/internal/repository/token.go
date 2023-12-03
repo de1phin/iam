@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-
-	"github.com/de1phin/iam/token/internal/model"
 )
 
 type Database interface {
@@ -19,10 +17,6 @@ func New(conn Database) *Repository {
 	}
 }
 
-func (r *Repository) GenerateToken(ctx context.Context) (*model.Token, error) {
-	return nil, nil
-}
-
 func (r *Repository) GetToken(ctx context.Context, ssh string) (string, error) {
 	return "", nil
 }
@@ -31,10 +25,14 @@ func (r *Repository) SetToken(ctx context.Context, ssh string, token string) err
 	return nil
 }
 
-func (r *Repository) GetExist(ctx context.Context, token string) (bool, error) {
-	return false, nil
+func (r *Repository) DeleteToken(ctx context.Context, ssh string) error {
+	return nil
 }
 
-func (r *Repository) SetExist(ctx context.Context, token string, isExist bool) error {
+func (r *Repository) GetSsh(ctx context.Context, token string) (string, error) {
+	return "", nil
+}
+
+func (r *Repository) SetSsh(ctx context.Context, token string, ssh string) error {
 	return nil
 }

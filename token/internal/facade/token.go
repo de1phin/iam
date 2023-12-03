@@ -1,13 +1,14 @@
+//go:generate mockery --case=underscore --name Cache --with-expecter=true
+//go:generate mockery --case=underscore --name Repository --with-expecter=true
+//go:generate mockery --case=underscore --name Generator --with-expecter=true
+
 package facade
 
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/de1phin/iam/pkg/logger"
 	"github.com/opentracing/opentracing-go"
-	"go.uber.org/zap"
 
 	"github.com/de1phin/iam/token/internal/cache"
 	"github.com/de1phin/iam/token/internal/model"
@@ -16,17 +17,19 @@ import (
 type Cache interface {
 	GetToken(ctx context.Context, ssh string) (string, error)
 	SetToken(ctx context.Context, ssh string, token string) error
+	DeleteToken(ctx context.Context, ssh string) error
 
-	GetExist(ctx context.Context, token string) (bool, error)
-	SetExist(ctx context.Context, token string, isExist bool) error
+	GetSsh(ctx context.Context, token string) (string, error)
+	SetSsh(ctx context.Context, token string, ssh string) error
+	DeleteSsh(ctx context.Context, ssh string) error
 }
 
 type Repository interface {
 	GetToken(ctx context.Context, ssh string) (string, error)
 	SetToken(ctx context.Context, ssh string, token string) error
+	DeleteToken(ctx context.Context, ssh string) error
 
-	GetExist(ctx context.Context, token string) (bool, error)
-	SetExist(ctx context.Context, token string, isExist bool) error
+	GetSsh(ctx context.Context, token string) (string, error)
 }
 
 type Generator interface {
@@ -37,13 +40,15 @@ type Facade struct {
 	cache     Cache
 	repo      Repository
 	generator Generator
+	onlyCache bool
 }
 
-func NewFacade(cache Cache, repo Repository, generator Generator) *Facade {
+func NewFacade(cache Cache, repo Repository, generator Generator, onlyCacheMod bool) *Facade {
 	return &Facade{
 		cache:     cache,
 		repo:      repo,
 		generator: generator,
+		onlyCache: onlyCacheMod,
 	}
 }
 
@@ -51,46 +56,133 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GenerateToken")
 	defer span.Finish()
 
-	token, err := f.cache.GetToken(ctx, ssh)
-	if err == nil {
+	if f.onlyCache {
+		var isNotFound bool
+
+		token, err := f.cache.GetToken(ctx, ssh)
+		if err != nil {
+			isNotFound = errors.Is(err, cache.ErrNotFound)
+			if !isNotFound {
+				return nil, err
+			}
+		}
+
+		if !isNotFound {
+			cacheSsh, err := f.cache.GetSsh(ctx, token)
+			if err != nil {
+				return nil, err
+			}
+
+			if cacheSsh != "" {
+				return convertToModelToken(token), err
+			}
+		}
+
+		token = f.generator.Generate()
+
+		if err = f.cache.SetToken(ctx, ssh, token); err != nil {
+			return nil, err
+		}
+		if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+			return nil, err
+		}
 		return convertToModelToken(token), nil
 	}
 
-	return nil, err
+	// TODO добавить логику с базой
+
+	return nil, nil
 }
 
 func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/RefreshToken")
+	defer span.Finish()
+
+	token := f.generator.Generate()
+
+	if f.onlyCache {
+		if err := f.cache.SetToken(ctx, ssh, token); err != nil {
+			return nil, err
+		}
+		if err := f.cache.SetSsh(ctx, token, ssh); err != nil {
+			return nil, err
+		}
+		return convertToModelToken(token), nil
+	}
+
+	//if err := f.cache.SetToken(ctx, ssh, token); err != nil {
+	//	logger.Error("cache SetToken", zap.Error(err))
+	//}
+	//
+	//if err := f.cache.SetSsh(ctx, token, ssh); err != nil {
+	//	logger.Error("cache SetToken", zap.Error(err))
+	//}
+	//
+	//if err := f.repo.SetToken(ctx, ssh, token); err != nil {
+	//	return nil, err
+	//}
+	//
+	//return convertToModelToken(token), nil
+
 	return nil, nil
 }
 
 func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/DeleteToken")
+	defer span.Finish()
+
+	if f.onlyCache {
+		token, err := f.cache.GetToken(ctx, ssh)
+		if err != nil {
+			return err
+		}
+
+		if err = f.cache.DeleteToken(ctx, ssh); err != nil {
+			return err
+		}
+
+		return f.cache.DeleteSsh(ctx, token)
+	}
+
+	//if err := f.cache.DeleteToken(ctx, ssh); err != nil {
+	//	logger.Error("cache DeleteToken", zap.Error(err))
+	//}
+	//
+	//return f.repo.DeleteToken(ctx, ssh)
+
 	return nil
 }
 
-func (f *Facade) CheckToken(ctx context.Context, tk model.Token) (bool, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GenerateToken")
+func (f *Facade) GetSshByToken(ctx context.Context, tk model.Token) (string, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GetSshByToken")
 	defer span.Finish()
 
 	token := tk.Token
 
-	isExist, err := f.cache.GetExist(ctx, token)
-	if err == nil {
-		return isExist, nil
-	}
-	if !errors.Is(err, cache.ErrNotFound) {
-		logger.Error("cache GetExist", zap.Error(err))
+	if f.onlyCache {
+		return f.cache.GetSsh(ctx, token)
 	}
 
-	isExist, err = f.repo.GetExist(ctx, token)
-	if err != nil {
-		return false, fmt.Errorf("repo GetExist: %w", err)
-	}
+	//ssh, err := f.cache.GetSsh(ctx, token)
+	//if err == nil {
+	//	return ssh, nil
+	//}
+	//if ssh == "" {
+	//	logger.Error("cache GetExist", zap.Error(err))
+	//}
+	//
+	//ssh, err = f.repo.GetSsh(ctx, token)
+	//if err != nil {
+	//	return "", fmt.Errorf("repo GetExist: %w", err)
+	//}
+	//
+	//if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+	//	logger.Error("cache SetExist", zap.Error(err))
+	//}
+	//
+	//return ssh, nil
 
-	if err = f.cache.SetExist(ctx, token, isExist); err != nil {
-		logger.Error("cache SetExist", zap.Error(err))
-	}
-
-	return isExist, nil
+	return "", nil
 }
 
 func convertToModelToken(token string) *model.Token {

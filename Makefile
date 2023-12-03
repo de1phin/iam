@@ -14,3 +14,6 @@ $(proto):
 		--swagger_out=${PATH_OUT} \
 		--swagger_opt=logtostderr=true \
 		$(shell find ./$@ -iname "*.proto")
+
+test:
+	go test ./...

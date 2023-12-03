@@ -6,7 +6,10 @@ import (
 	"github.com/de1phin/iam/token/internal/model"
 )
 
-func mapTokenToInternal(pb *desc.Token) model.Token {
+func MapTokenToInternal(pb *desc.Token) model.Token {
+	if pb == nil {
+		return model.Token{}
+	}
 	return model.Token{
 		Token: pb.Token,
 	}
