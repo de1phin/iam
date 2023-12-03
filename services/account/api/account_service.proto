@@ -13,9 +13,9 @@ service AccountService {
     rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
     rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
 
-    rpc CreateSshKey(CreateAccountRequest) returns (CreateSshKeyResponse);
+    rpc CreateSshKey(CreateSshKeyRequest) returns (CreateSshKeyResponse);
     rpc ListSshKeys(ListSshKeysRequest) returns (ListSshKeysResponse);
-    rpc DeleteSshKey(DeleteAccountRequest) returns (DeleteAccountResponse);
+    rpc DeleteSshKey(DeleteSshKeyRequest) returns (DeleteSshKeyResponse);
 
     rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
 }
