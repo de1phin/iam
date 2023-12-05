@@ -7,10 +7,14 @@ package facade
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/de1phin/iam/pkg/logger"
 	"github.com/de1phin/iam/services/token/internal/cache"
 	"github.com/de1phin/iam/services/token/internal/model"
+	"github.com/de1phin/iam/services/token/internal/repository"
 	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 )
 
 type Cache interface {
@@ -20,7 +24,7 @@ type Cache interface {
 
 	GetSsh(ctx context.Context, token string) (string, error)
 	SetSsh(ctx context.Context, token string, ssh string) error
-	DeleteSsh(ctx context.Context, ssh string) error
+	DeleteSsh(ctx context.Context, token string) error
 }
 
 type Repository interface {
@@ -56,41 +60,87 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 	defer span.Finish()
 
 	if f.onlyCache {
-		var isNotFound bool
+		var tokenNotFound bool
 
 		token, err := f.cache.GetToken(ctx, ssh)
 		if err != nil {
-			isNotFound = errors.Is(err, cache.ErrNotFound)
-			if !isNotFound {
+			tokenNotFound = errors.Is(err, cache.ErrNotFound)
+			if !tokenNotFound {
 				return nil, err
 			}
 		}
 
-		if !isNotFound {
-			cacheSsh, err := f.cache.GetSsh(ctx, token)
-			if err != nil {
-				return nil, err
-			}
-
-			if cacheSsh != "" {
+		if !tokenNotFound {
+			_, err = f.cache.GetSsh(ctx, token)
+			if err == nil {
 				return convertToModelToken(token), err
 			}
+
+			if !errors.Is(err, cache.ErrNotFound) {
+				return nil, err
+			}
 		}
 
-		token = f.generator.Generate()
+		newToken := f.generator.Generate()
 
-		if err = f.cache.SetToken(ctx, ssh, token); err != nil {
+		if err = f.cache.SetToken(ctx, ssh, newToken); err != nil {
 			return nil, err
 		}
-		if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+		if err = f.cache.DeleteSsh(ctx, token); err != nil {
 			return nil, err
 		}
-		return convertToModelToken(token), nil
+		if err = f.cache.SetSsh(ctx, newToken, ssh); err != nil {
+			return nil, err
+		}
+
+		return convertToModelToken(newToken), nil
 	}
 
-	// TODO добавить логику с базой
+	var isNotFound bool
 
-	return nil, nil
+	token, err := f.cache.GetToken(ctx, ssh)
+	if err != nil {
+		isNotFound = errors.Is(err, cache.ErrNotFound)
+		if !isNotFound {
+			logger.Error("cache GetToken", zap.Error(err))
+		}
+	}
+
+	if !isNotFound && err == nil {
+		_, err = f.cache.GetSsh(ctx, token)
+		if err == nil {
+			return convertToModelToken(token), err
+		}
+		if !errors.Is(err, cache.ErrNotFound) {
+			logger.Error("cache GetSsh", zap.Error(err))
+		}
+	}
+
+	token, err = f.repo.GetToken(ctx, ssh)
+	if err == nil {
+		return convertToModelToken(token), nil
+	}
+	if !errors.Is(err, repository.ErrNotFound) {
+		return nil, err
+	}
+
+	newToken := f.generator.Generate()
+
+	if err = f.cache.SetToken(ctx, ssh, newToken); err != nil {
+		logger.Error("cache SetToken", zap.Error(err))
+	}
+	if err = f.cache.DeleteSsh(ctx, token); err != nil {
+		logger.Error("cache DeleteSsh", zap.Error(err))
+	}
+	if err = f.cache.SetSsh(ctx, newToken, ssh); err != nil {
+		logger.Error("cache SetSsh", zap.Error(err))
+	}
+
+	if err = f.repo.SetToken(ctx, ssh, newToken); err != nil {
+		return nil, err
+	}
+
+	return convertToModelToken(newToken), nil
 }
 
 func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, error) {
@@ -109,21 +159,30 @@ func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, er
 		return convertToModelToken(token), nil
 	}
 
-	//if err := f.cache.SetToken(ctx, ssh, token); err != nil {
-	//	logger.Error("cache SetToken", zap.Error(err))
-	//}
-	//
-	//if err := f.cache.SetSsh(ctx, token, ssh); err != nil {
-	//	logger.Error("cache SetToken", zap.Error(err))
-	//}
-	//
-	//if err := f.repo.SetToken(ctx, ssh, token); err != nil {
-	//	return nil, err
-	//}
-	//
-	//return convertToModelToken(token), nil
+	if err := f.cache.SetToken(ctx, ssh, token); err != nil {
+		logger.Error("cache SetToken", zap.Error(err))
+	}
 
-	return nil, nil
+	oldToken, err := f.cache.GetToken(ctx, ssh)
+	if err != nil {
+		if !errors.Is(err, cache.ErrNotFound) {
+			logger.Error("cache GetToken", zap.Error(err))
+		}
+	} else {
+		if err = f.cache.DeleteSsh(ctx, oldToken); err != nil {
+			logger.Error("cache DeleteSsh", zap.Error(err))
+		}
+	}
+
+	if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+		logger.Error("cache SetSsh", zap.Error(err))
+	}
+
+	if err = f.repo.SetToken(ctx, ssh, token); err != nil {
+		return nil, err
+	}
+
+	return convertToModelToken(token), nil
 }
 
 func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
@@ -133,6 +192,9 @@ func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
 	if f.onlyCache {
 		token, err := f.cache.GetToken(ctx, ssh)
 		if err != nil {
+			if errors.Is(err, cache.ErrNotFound) {
+				return nil
+			}
 			return err
 		}
 
@@ -143,13 +205,22 @@ func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
 		return f.cache.DeleteSsh(ctx, token)
 	}
 
-	//if err := f.cache.DeleteToken(ctx, ssh); err != nil {
-	//	logger.Error("cache DeleteToken", zap.Error(err))
-	//}
-	//
-	//return f.repo.DeleteToken(ctx, ssh)
+	token, err := f.cache.GetToken(ctx, ssh)
+	if err == nil {
+		if err = f.cache.DeleteSsh(ctx, token); err != nil {
+			logger.Error("cache DeleteToken", zap.Error(err))
+		}
+	} else {
+		if !errors.Is(err, cache.ErrNotFound) {
+			logger.Error("cache GetToken", zap.Error(err))
+		}
+	}
 
-	return nil
+	if err = f.cache.DeleteToken(ctx, ssh); err != nil {
+		logger.Error("cache DeleteToken", zap.Error(err))
+	}
+
+	return f.repo.DeleteToken(ctx, ssh)
 }
 
 func (f *Facade) GetSshByToken(ctx context.Context, tk model.Token) (string, error) {
@@ -162,26 +233,30 @@ func (f *Facade) GetSshByToken(ctx context.Context, tk model.Token) (string, err
 		return f.cache.GetSsh(ctx, token)
 	}
 
-	//ssh, err := f.cache.GetSsh(ctx, token)
-	//if err == nil {
-	//	return ssh, nil
-	//}
-	//if ssh == "" {
-	//	logger.Error("cache GetExist", zap.Error(err))
-	//}
-	//
-	//ssh, err = f.repo.GetSsh(ctx, token)
-	//if err != nil {
-	//	return "", fmt.Errorf("repo GetExist: %w", err)
-	//}
-	//
-	//if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
-	//	logger.Error("cache SetExist", zap.Error(err))
-	//}
-	//
-	//return ssh, nil
+	ssh, err := f.cache.GetSsh(ctx, token)
+	if err == nil {
+		return ssh, nil
+	}
+	notFound := errors.Is(err, cache.ErrNotFound)
+	if !notFound {
+		logger.Error("cache GetSsh", zap.Error(err))
+	}
 
-	return "", nil
+	ssh, err = f.repo.GetSsh(ctx, token)
+	if err != nil {
+		return "", fmt.Errorf("repo GetSsh: %w", err)
+	}
+
+	if notFound {
+		if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+			logger.Error("cache SetSsh", zap.Error(err))
+		}
+		if err = f.cache.SetToken(ctx, ssh, token); err != nil {
+			logger.Error("cache SetSsh", zap.Error(err))
+		}
+	}
+
+	return ssh, nil
 }
 
 func convertToModelToken(token string) *model.Token {

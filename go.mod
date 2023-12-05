@@ -1,6 +1,6 @@
 module github.com/de1phin/iam
 
-go 1.20
+go 1.21
 
 require (
 	github.com/opentracing/opentracing-go v1.2.0
