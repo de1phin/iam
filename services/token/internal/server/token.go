@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc"
 )
 
-func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *sync.WaitGroup) {
-	listener, err := net.Listen("tcp", ":8080") // TODO отбибабобьте меня и поправьте адрес
+func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *sync.WaitGroup, host string) {
+	listener, err := net.Listen("tcp", host)
 	if err != nil {
 		logger.Error("failed to listen in sender server", zap.Error(err))
 	}

@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/de1phin/iam/services/token/internal/cache"
+	mocks2 "github.com/de1phin/iam/services/token/internal/facade/mocks"
+	"github.com/de1phin/iam/services/token/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
-	"github.com/de1phin/iam/token/internal/cache"
-	"github.com/de1phin/iam/token/internal/facade/mocks"
-	"github.com/de1phin/iam/token/internal/model"
 )
 
 const (
@@ -121,8 +120,8 @@ func Test_onlyCache_GenerateToken(t *testing.T) {
 			t.Parallel()
 
 			var (
-				cache     = &mocks.Cache{}
-				generator = &mocks.Generator{}
+				cache     = &mocks2.Cache{}
+				generator = &mocks2.Generator{}
 			)
 
 			cache.EXPECT().GetToken(mock.Anything, ssh).Return(test.getToken, test.getTokenErr)
@@ -131,7 +130,7 @@ func Test_onlyCache_GenerateToken(t *testing.T) {
 			cache.EXPECT().SetToken(mock.Anything, ssh, token).Return(test.setTokenErr)
 			cache.EXPECT().SetSsh(mock.Anything, token, ssh).Return(test.setSshErr)
 
-			facade := NewFacade(cache, &mocks.Repository{}, generator, test.onlyCache)
+			facade := NewFacade(cache, &mocks2.Repository{}, generator, test.onlyCache)
 
 			actual, err := facade.GenerateToken(context.Background(), ssh)
 			assert.Equal(t, test.expect, actual)
@@ -182,15 +181,15 @@ func Test_onlyCache_RefreshToken(t *testing.T) {
 			t.Parallel()
 
 			var (
-				cache     = &mocks.Cache{}
-				generator = &mocks.Generator{}
+				cache     = &mocks2.Cache{}
+				generator = &mocks2.Generator{}
 			)
 
 			generator.EXPECT().Generate().Return(token)
 			cache.EXPECT().SetToken(mock.Anything, ssh, token).Return(test.setTokenErr)
 			cache.EXPECT().SetSsh(mock.Anything, token, ssh).Return(test.setSshErr)
 
-			facade := NewFacade(cache, &mocks.Repository{}, generator, test.onlyCache)
+			facade := NewFacade(cache, &mocks2.Repository{}, generator, test.onlyCache)
 
 			actual, err := facade.RefreshToken(context.Background(), ssh)
 			assert.Equal(t, test.expect, actual)
@@ -247,13 +246,13 @@ func Test_onlyCache_DeleteToken(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			var cache = &mocks.Cache{}
+			var cache = &mocks2.Cache{}
 
 			cache.EXPECT().GetToken(mock.Anything, ssh).Return(test.getToken, test.getTokenErr)
 			cache.EXPECT().DeleteToken(mock.Anything, ssh).Return(test.deleteTokenErr)
 			cache.EXPECT().DeleteSsh(mock.Anything, token).Return(test.deleteSshErr)
 
-			facade := NewFacade(cache, &mocks.Repository{}, &mocks.Generator{}, test.onlyCache)
+			facade := NewFacade(cache, &mocks2.Repository{}, &mocks2.Generator{}, test.onlyCache)
 
 			err := facade.DeleteToken(context.Background(), ssh)
 			assert.ErrorIs(t, test.expectErr, err)
@@ -297,11 +296,11 @@ func Test_onlyCache_GetSshByToken(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			var cache = &mocks.Cache{}
+			var cache = &mocks2.Cache{}
 
 			cache.EXPECT().GetSsh(mock.Anything, token).Return(test.getSsh, test.getSshErr)
 
-			facade := NewFacade(cache, &mocks.Repository{}, &mocks.Generator{}, test.onlyCache)
+			facade := NewFacade(cache, &mocks2.Repository{}, &mocks2.Generator{}, test.onlyCache)
 
 			actual, err := facade.GetSshByToken(context.Background(), *modelToken)
 			assert.Equal(t, test.expect, actual)

@@ -8,10 +8,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/de1phin/iam/services/token/internal/cache"
+	"github.com/de1phin/iam/services/token/internal/model"
 	"github.com/opentracing/opentracing-go"
-
-	"github.com/de1phin/iam/token/internal/cache"
-	"github.com/de1phin/iam/token/internal/model"
 )
 
 type Cache interface {
