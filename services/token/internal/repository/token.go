@@ -3,20 +3,19 @@ package repository
 import (
 	"context"
 	"errors"
+
+	"github.com/de1phin/iam/pkg/database"
 )
 
 var ErrNotFound = errors.New("not found")
 
-type Database interface {
-}
-
 type Repository struct {
-	conn Database
+	db database.Database
 }
 
-func New(conn Database) *Repository {
+func New(db database.Database) *Repository {
 	return &Repository{
-		conn: conn,
+		db: db,
 	}
 }
 
@@ -30,9 +29,9 @@ func (r *Repository) GetToken(ctx context.Context, ssh string) (string, error) {
 		WHERE
 			ssh = $1`
 
-	query = query
+	err := r.db.GetSingle(ctx, &token, query, ssh)
 
-	return token.Token, nil
+	return token.Token, err
 }
 
 func (r *Repository) SetToken(ctx context.Context, ssh string, token string) error {
@@ -44,12 +43,13 @@ func (r *Repository) SetToken(ctx context.Context, ssh string, token string) err
 		ON CONFLICT (token) DO UPDATE SET 
 		    ssh = EXCLUDED.ssh,
 		    token = EXCLUDED.token,
-		    updated_at = NOW() at time zone 'utc';
+		    updated_at = NOW() at time zone 'utc',
+		    deleted_at = NULL;
 `
 
-	query = query
+	_, err := r.db.Exec(ctx, query, token, ssh)
 
-	return nil
+	return err
 }
 
 func (r *Repository) DeleteToken(ctx context.Context, ssh string) error {
@@ -58,9 +58,9 @@ func (r *Repository) DeleteToken(ctx context.Context, ssh string) error {
 		SET deleted_at = NOW() at time zone 'utc' 
 		WHERE ssh = $1;`
 
-	query = query
+	_, err := r.db.Exec(ctx, query, ssh)
 
-	return nil
+	return err
 }
 
 func (r *Repository) GetSsh(ctx context.Context, token string) (string, error) {
@@ -73,7 +73,7 @@ func (r *Repository) GetSsh(ctx context.Context, token string) (string, error) {
 		WHERE
 			token = $1`
 
-	query = query
+	err := r.db.GetSingle(ctx, &repoToken, query, token)
 
-	return repoToken.Ssh, nil
+	return repoToken.Ssh, err
 }

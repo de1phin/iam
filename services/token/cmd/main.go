@@ -9,6 +9,7 @@ import (
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
 	memcache "github.com/de1phin/iam/pkg/cache"
+	"github.com/de1phin/iam/pkg/database"
 	"github.com/de1phin/iam/pkg/logger"
 	token_service "github.com/de1phin/iam/services/token/app/token"
 	"github.com/de1phin/iam/services/token/internal/cache"
@@ -23,6 +24,7 @@ import (
 
 type connections struct {
 	memcached *memcache.Cache[string, []byte]
+	database  database.Database
 }
 
 type repositories struct {
@@ -42,7 +44,8 @@ type application struct {
 	facade       *facade.Facade
 	service      *token_service.Implementation
 
-	wg *sync.WaitGroup
+	wg           *sync.WaitGroup
+	onlyCacheMod bool
 }
 
 func newApp(ctx context.Context) *application {
@@ -52,7 +55,7 @@ func newApp(ctx context.Context) *application {
 
 	a.initClients(ctx)
 	a.initGenerator()
-	a.initConnections()
+	a.initConnections(ctx)
 	a.initRepos()
 	a.initFacade()
 	a.initService()
@@ -76,23 +79,31 @@ func (a *application) initGenerator() {
 	a.generator = generator.NewGenerator(length)
 }
 
-func (a *application) initConnections() {
+func (a *application) initConnections(ctx context.Context) {
 	memcached := memcache.NewCache[string, []byte]()
+
+	dsn := "" // TODO
+	db, err := database.NewDatabase(ctx, dsn)
+	if err != nil {
+		logger.Error("init connect to database, only cached mode turn on", zap.Error(err))
+		a.onlyCacheMod = true
+	}
 
 	a.connections = connections{
 		memcached: memcached,
+		database:  db,
 	}
 }
 
 func (a *application) initRepos() {
 	a.repositories = repositories{
 		cache: cache.NewCache(a.connections.memcached),
+		repo:  repository.New(a.connections.database),
 	}
 }
 
 func (a *application) initFacade() {
-	onlyCacheMod := true
-	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, onlyCacheMod)
+	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, a.onlyCacheMod)
 }
 
 func (a *application) initService() {
@@ -107,6 +118,8 @@ func (a *application) Run(ctx context.Context) error {
 }
 
 func (a *application) Close() {
+	a.connections.database.Close()
+
 	a.wg.Wait()
 }
 
