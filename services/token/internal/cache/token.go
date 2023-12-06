@@ -108,7 +108,7 @@ func (c *MemCache) GetSsh(ctx context.Context, token string) (string, error) {
 
 	value, exist := c.conn.Get(string(key))
 	if !exist {
-		return "", nil
+		return "", ErrNotFound
 	}
 
 	var existValue SshValue

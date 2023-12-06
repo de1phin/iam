@@ -21,13 +21,13 @@ func (_m *Cache) EXPECT() *Cache_Expecter {
 	return &Cache_Expecter{mock: &_m.Mock}
 }
 
-// DeleteSsh provides a mock function with given fields: ctx, ssh
-func (_m *Cache) DeleteSsh(ctx context.Context, ssh string) error {
-	ret := _m.Called(ctx, ssh)
+// DeleteSsh provides a mock function with given fields: ctx, token
+func (_m *Cache) DeleteSsh(ctx context.Context, token string) error {
+	ret := _m.Called(ctx, token)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, ssh)
+		r0 = rf(ctx, token)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -42,12 +42,12 @@ type Cache_DeleteSsh_Call struct {
 
 // DeleteSsh is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ssh string
-func (_e *Cache_Expecter) DeleteSsh(ctx interface{}, ssh interface{}) *Cache_DeleteSsh_Call {
-	return &Cache_DeleteSsh_Call{Call: _e.mock.On("DeleteSsh", ctx, ssh)}
+//   - token string
+func (_e *Cache_Expecter) DeleteSsh(ctx interface{}, token interface{}) *Cache_DeleteSsh_Call {
+	return &Cache_DeleteSsh_Call{Call: _e.mock.On("DeleteSsh", ctx, token)}
 }
 
-func (_c *Cache_DeleteSsh_Call) Run(run func(ctx context.Context, ssh string)) *Cache_DeleteSsh_Call {
+func (_c *Cache_DeleteSsh_Call) Run(run func(ctx context.Context, token string)) *Cache_DeleteSsh_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
