@@ -4,12 +4,11 @@ import (
 	"context"
 
 	desc "github.com/de1phin/iam/genproto/services/token/api"
+	"github.com/de1phin/iam/services/token/internal/mapping"
+	"github.com/de1phin/iam/services/token/internal/model"
 	"github.com/opentracing/opentracing-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/de1phin/iam/token/internal/mapping"
-	"github.com/de1phin/iam/token/internal/model"
 )
 
 type TokenFacade interface {

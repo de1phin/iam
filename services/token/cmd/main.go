@@ -10,16 +10,15 @@ import (
 	account "github.com/de1phin/iam/genproto/services/account/api"
 	memcache "github.com/de1phin/iam/pkg/cache"
 	"github.com/de1phin/iam/pkg/logger"
+	token_service "github.com/de1phin/iam/services/token/app/token"
+	"github.com/de1phin/iam/services/token/internal/cache"
+	"github.com/de1phin/iam/services/token/internal/client"
+	"github.com/de1phin/iam/services/token/internal/facade"
+	"github.com/de1phin/iam/services/token/internal/generator"
+	"github.com/de1phin/iam/services/token/internal/repository"
+	"github.com/de1phin/iam/services/token/internal/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-
-	token_service "github.com/de1phin/iam/token/api/token"
-	"github.com/de1phin/iam/token/internal/cache"
-	"github.com/de1phin/iam/token/internal/client"
-	"github.com/de1phin/iam/token/internal/facade"
-	"github.com/de1phin/iam/token/internal/generator"
-	"github.com/de1phin/iam/token/internal/repository"
-	"github.com/de1phin/iam/token/internal/server"
 )
 
 type connections struct {
@@ -101,7 +100,8 @@ func (a *application) initService() {
 }
 
 func (a *application) Run(ctx context.Context) error {
-	server.StartTokenService(ctx, a.service, a.wg)
+	host := "token-service" // TODO
+	server.StartTokenService(ctx, a.service, a.wg, host)
 
 	return nil
 }

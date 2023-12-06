@@ -2,8 +2,7 @@ package mapping
 
 import (
 	desc "github.com/de1phin/iam/genproto/services/token/api"
-
-	"github.com/de1phin/iam/token/internal/model"
+	"github.com/de1phin/iam/services/token/internal/model"
 )
 
 func MapTokenToInternal(pb *desc.Token) model.Token {
