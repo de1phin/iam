@@ -44,7 +44,7 @@ func (d *database) GetSingle(ctx context.Context, pointerOnDst any, query string
 		d.conn,
 		pointerOnDst,
 		query,
-		args,
+		args...,
 	)
 	return err
 }
@@ -55,7 +55,7 @@ func (d *database) GetSlice(ctx context.Context, pointerOnSliceDst any, query st
 		d.conn,
 		pointerOnSliceDst,
 		query,
-		args,
+		args...,
 	)
 	return err
 }
