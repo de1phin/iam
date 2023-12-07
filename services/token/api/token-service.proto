@@ -22,7 +22,7 @@ message Token {
 }
 
 message GenerateTokenRequest {
-    bytes ssh_key = 1;
+    string ssh_pub_key = 1;
 }
 
 message GenerateTokenResponse {

@@ -12,7 +12,6 @@ import (
 	"github.com/de1phin/iam/pkg/logger"
 	"github.com/de1phin/iam/services/token/internal/cache"
 	"github.com/de1phin/iam/services/token/internal/model"
-	"github.com/de1phin/iam/services/token/internal/repository"
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 )
@@ -59,84 +58,9 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GenerateToken")
 	defer span.Finish()
 
-	if f.onlyCache {
-		var tokenNotFound bool
-
-		token, err := f.cache.GetToken(ctx, ssh)
-		if err != nil {
-			tokenNotFound = errors.Is(err, cache.ErrNotFound)
-			if !tokenNotFound {
-				return nil, err
-			}
-		}
-
-		if !tokenNotFound {
-			_, err = f.cache.GetSsh(ctx, token)
-			if err == nil {
-				return convertToModelToken(token), err
-			}
-
-			if !errors.Is(err, cache.ErrNotFound) {
-				return nil, err
-			}
-		}
-
-		newToken := f.generator.Generate()
-
-		if err = f.cache.SetToken(ctx, ssh, newToken); err != nil {
-			return nil, err
-		}
-		if err = f.cache.DeleteSsh(ctx, token); err != nil {
-			return nil, err
-		}
-		if err = f.cache.SetSsh(ctx, newToken, ssh); err != nil {
-			return nil, err
-		}
-
-		return convertToModelToken(newToken), nil
-	}
-
-	var isNotFound bool
-
-	token, err := f.cache.GetToken(ctx, ssh)
-	if err != nil {
-		isNotFound = errors.Is(err, cache.ErrNotFound)
-		if !isNotFound {
-			logger.Error("cache GetToken", zap.Error(err))
-		}
-	}
-
-	if !isNotFound && err == nil {
-		_, err = f.cache.GetSsh(ctx, token)
-		if err == nil {
-			return convertToModelToken(token), err
-		}
-		if !errors.Is(err, cache.ErrNotFound) {
-			logger.Error("cache GetSsh", zap.Error(err))
-		}
-	}
-
-	token, err = f.repo.GetToken(ctx, ssh)
-	if err == nil {
-		return convertToModelToken(token), nil
-	}
-	if !errors.Is(err, repository.ErrNotFound) {
-		return nil, err
-	}
-
 	newToken := f.generator.Generate()
 
-	if err = f.cache.SetToken(ctx, ssh, newToken); err != nil {
-		logger.Error("cache SetToken", zap.Error(err))
-	}
-	if err = f.cache.DeleteSsh(ctx, token); err != nil {
-		logger.Error("cache DeleteSsh", zap.Error(err))
-	}
-	if err = f.cache.SetSsh(ctx, newToken, ssh); err != nil {
-		logger.Error("cache SetSsh", zap.Error(err))
-	}
-
-	if err = f.repo.SetToken(ctx, ssh, newToken); err != nil {
+	if err := f.repo.SetToken(ctx, ssh, newToken); err != nil {
 		return nil, err
 	}
 

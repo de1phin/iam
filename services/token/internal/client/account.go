@@ -9,7 +9,7 @@ import (
 )
 
 type Client interface {
-	Authenticate(ctx context.Context, in *pb.AuthenticateRequest, opts ...grpc.CallOption) (*pb.AuthenticateResponse, error)
+	GetAccountBySshKey(ctx context.Context, in *pb.GetAccountBySshKeyRequest, opts ...grpc.CallOption) (*pb.GetAccountBySshKeyResponse, error)
 }
 
 type AccountWrapper struct {
@@ -22,18 +22,18 @@ func NewAccountWrapper(cl Client) *AccountWrapper {
 	}
 }
 
-func (w *AccountWrapper) Authenticate(ctx context.Context, ssh []byte) (string, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "client/wrapper/Authenticate")
+func (w *AccountWrapper) GetAccountBySshKey(ctx context.Context, sshPubKey []byte) (string, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "client/wrapper/GetAccountBySshKey")
 	defer span.Finish()
 
-	req := &pb.AuthenticateRequest{
-		SshKey: ssh,
+	req := &pb.GetAccountBySshKeyRequest{
+		SshPubKey: sshPubKey,
 	}
 
-	resp, err := w.cl.Authenticate(ctx, req)
+	resp, err := w.cl.GetAccountBySshKey(ctx, req)
 	if err != nil {
 		return "", err
 	}
 
-	return resp.AccountId, nil
+	return resp.GetAccountId(), nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/de1phin/iam/services/account/internal/database"
 	"github.com/de1phin/iam/services/account/pkg/ctxlog"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -200,5 +201,29 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 
 	return &account.UpdateAccountResponse{
 		Account: acc,
+	}, nil
+}
+
+func (s *AccountService) GetAccountBySshKey(_ context.Context, req *account.GetAccountBySshKeyRequest) (*account.GetAccountBySshKeyResponse, error) {
+	logger := s.logger.Named("GetAccountBySshKey")
+
+	sshPubKey, err := ssh.ParsePublicKey(req.GetSshPubKey())
+	if err != nil {
+		logger.Debug("Ssh Public key parsing failed", zap.ByteString("public key", req.GetSshPubKey()))
+		return nil, status.Error(codes.InvalidArgument, "Invalid ssh public key")
+	}
+	fingerprint := GetFingerprint(sshPubKey)
+	key, err := s.sshKeys.Get(fingerprint)
+	if err != nil {
+		if errors.Is(err, database.ErrNotExist{}) {
+			return nil, ErrorNotFound("ssh key", fingerprint)
+		}
+
+		logger.With(zap.String("fingerprint", fingerprint)).Error("sshKeys.Get Internal Error", zap.Error(err))
+		return nil, ErrorInternal()
+	}
+
+	return &account.GetAccountBySshKeyResponse{
+		AccountId: key.GetAccountId(),
 	}, nil
 }

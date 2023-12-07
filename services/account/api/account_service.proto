@@ -13,11 +13,11 @@ service AccountService {
     rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
     rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
 
+    rpc GetAccountBySshKey(GetAccountBySshKeyRequest) returns (GetAccountBySshKeyResponse);
+
     rpc CreateSshKey(CreateSshKeyRequest) returns (CreateSshKeyResponse);
     rpc ListSshKeys(ListSshKeysRequest) returns (ListSshKeysResponse);
     rpc DeleteSshKey(DeleteSshKeyRequest) returns (DeleteSshKeyResponse);
-
-    rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
 }
 
 // Global models
@@ -35,16 +35,6 @@ message SshKey {
     string account_id = 2;
     bytes public_key = 3;
     google.protobuf.Timestamp created_at = 4;
-}
-
-// Authentication
-
-message AuthenticateRequest {
-    bytes ssh_key = 1;
-}
-
-message AuthenticateResponse {
-    string account_id = 1;
 }
 
 // Account CRUD Requests/Responses
@@ -84,6 +74,14 @@ message DeleteAccountRequest {
 }
 
 message DeleteAccountResponse {}
+
+message GetAccountBySshKeyRequest {
+    bytes ssh_pub_key = 1;
+}
+
+message GetAccountBySshKeyResponse {
+    string account_id = 1;
+}
 
 // SshKey CRUD Requests/Responses
 
