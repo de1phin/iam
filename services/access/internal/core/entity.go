@@ -1,7 +1,7 @@
 package core
 
 type AccessBinding struct {
-	Token    string
+	UserID   string
 	RoleName string
 	Resource string
 }
