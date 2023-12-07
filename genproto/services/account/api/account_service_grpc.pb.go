@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AccountService_CreateAccount_FullMethodName = "/iam.services.account.AccountService/CreateAccount"
-	AccountService_GetAccount_FullMethodName    = "/iam.services.account.AccountService/GetAccount"
-	AccountService_UpdateAccount_FullMethodName = "/iam.services.account.AccountService/UpdateAccount"
-	AccountService_DeleteAccount_FullMethodName = "/iam.services.account.AccountService/DeleteAccount"
-	AccountService_CreateSshKey_FullMethodName  = "/iam.services.account.AccountService/CreateSshKey"
-	AccountService_ListSshKeys_FullMethodName   = "/iam.services.account.AccountService/ListSshKeys"
-	AccountService_DeleteSshKey_FullMethodName  = "/iam.services.account.AccountService/DeleteSshKey"
-	AccountService_Authenticate_FullMethodName  = "/iam.services.account.AccountService/Authenticate"
+	AccountService_CreateAccount_FullMethodName      = "/iam.services.account.AccountService/CreateAccount"
+	AccountService_GetAccount_FullMethodName         = "/iam.services.account.AccountService/GetAccount"
+	AccountService_UpdateAccount_FullMethodName      = "/iam.services.account.AccountService/UpdateAccount"
+	AccountService_DeleteAccount_FullMethodName      = "/iam.services.account.AccountService/DeleteAccount"
+	AccountService_GetAccountBySshKey_FullMethodName = "/iam.services.account.AccountService/GetAccountBySshKey"
+	AccountService_CreateSshKey_FullMethodName       = "/iam.services.account.AccountService/CreateSshKey"
+	AccountService_ListSshKeys_FullMethodName        = "/iam.services.account.AccountService/ListSshKeys"
+	AccountService_DeleteSshKey_FullMethodName       = "/iam.services.account.AccountService/DeleteSshKey"
 )
 
 // AccountServiceClient is the client API for AccountService service.
@@ -37,10 +37,10 @@ type AccountServiceClient interface {
 	GetAccount(ctx context.Context, in *GetAccountRequest, opts ...grpc.CallOption) (*GetAccountResponse, error)
 	UpdateAccount(ctx context.Context, in *UpdateAccountRequest, opts ...grpc.CallOption) (*UpdateAccountResponse, error)
 	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
+	GetAccountBySshKey(ctx context.Context, in *GetAccountBySshKeyRequest, opts ...grpc.CallOption) (*GetAccountBySshKeyResponse, error)
 	CreateSshKey(ctx context.Context, in *CreateSshKeyRequest, opts ...grpc.CallOption) (*CreateSshKeyResponse, error)
 	ListSshKeys(ctx context.Context, in *ListSshKeysRequest, opts ...grpc.CallOption) (*ListSshKeysResponse, error)
 	DeleteSshKey(ctx context.Context, in *DeleteSshKeyRequest, opts ...grpc.CallOption) (*DeleteSshKeyResponse, error)
-	Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error)
 }
 
 type accountServiceClient struct {
@@ -87,6 +87,15 @@ func (c *accountServiceClient) DeleteAccount(ctx context.Context, in *DeleteAcco
 	return out, nil
 }
 
+func (c *accountServiceClient) GetAccountBySshKey(ctx context.Context, in *GetAccountBySshKeyRequest, opts ...grpc.CallOption) (*GetAccountBySshKeyResponse, error) {
+	out := new(GetAccountBySshKeyResponse)
+	err := c.cc.Invoke(ctx, AccountService_GetAccountBySshKey_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *accountServiceClient) CreateSshKey(ctx context.Context, in *CreateSshKeyRequest, opts ...grpc.CallOption) (*CreateSshKeyResponse, error) {
 	out := new(CreateSshKeyResponse)
 	err := c.cc.Invoke(ctx, AccountService_CreateSshKey_FullMethodName, in, out, opts...)
@@ -114,15 +123,6 @@ func (c *accountServiceClient) DeleteSshKey(ctx context.Context, in *DeleteSshKe
 	return out, nil
 }
 
-func (c *accountServiceClient) Authenticate(ctx context.Context, in *AuthenticateRequest, opts ...grpc.CallOption) (*AuthenticateResponse, error) {
-	out := new(AuthenticateResponse)
-	err := c.cc.Invoke(ctx, AccountService_Authenticate_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // AccountServiceServer is the server API for AccountService service.
 // All implementations must embed UnimplementedAccountServiceServer
 // for forward compatibility
@@ -131,10 +131,10 @@ type AccountServiceServer interface {
 	GetAccount(context.Context, *GetAccountRequest) (*GetAccountResponse, error)
 	UpdateAccount(context.Context, *UpdateAccountRequest) (*UpdateAccountResponse, error)
 	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
+	GetAccountBySshKey(context.Context, *GetAccountBySshKeyRequest) (*GetAccountBySshKeyResponse, error)
 	CreateSshKey(context.Context, *CreateSshKeyRequest) (*CreateSshKeyResponse, error)
 	ListSshKeys(context.Context, *ListSshKeysRequest) (*ListSshKeysResponse, error)
 	DeleteSshKey(context.Context, *DeleteSshKeyRequest) (*DeleteSshKeyResponse, error)
-	Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error)
 	mustEmbedUnimplementedAccountServiceServer()
 }
 
@@ -154,6 +154,9 @@ func (UnimplementedAccountServiceServer) UpdateAccount(context.Context, *UpdateA
 func (UnimplementedAccountServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
+func (UnimplementedAccountServiceServer) GetAccountBySshKey(context.Context, *GetAccountBySshKeyRequest) (*GetAccountBySshKeyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccountBySshKey not implemented")
+}
 func (UnimplementedAccountServiceServer) CreateSshKey(context.Context, *CreateSshKeyRequest) (*CreateSshKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSshKey not implemented")
 }
@@ -162,9 +165,6 @@ func (UnimplementedAccountServiceServer) ListSshKeys(context.Context, *ListSshKe
 }
 func (UnimplementedAccountServiceServer) DeleteSshKey(context.Context, *DeleteSshKeyRequest) (*DeleteSshKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSshKey not implemented")
-}
-func (UnimplementedAccountServiceServer) Authenticate(context.Context, *AuthenticateRequest) (*AuthenticateResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
 }
 func (UnimplementedAccountServiceServer) mustEmbedUnimplementedAccountServiceServer() {}
 
@@ -251,6 +251,24 @@ func _AccountService_DeleteAccount_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_GetAccountBySshKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAccountBySshKeyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).GetAccountBySshKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AccountService_GetAccountBySshKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).GetAccountBySshKey(ctx, req.(*GetAccountBySshKeyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AccountService_CreateSshKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateSshKeyRequest)
 	if err := dec(in); err != nil {
@@ -305,24 +323,6 @@ func _AccountService_DeleteSshKey_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthenticateRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(AccountServiceServer).Authenticate(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: AccountService_Authenticate_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).Authenticate(ctx, req.(*AuthenticateRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // AccountService_ServiceDesc is the grpc.ServiceDesc for AccountService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -347,6 +347,10 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_DeleteAccount_Handler,
 		},
 		{
+			MethodName: "GetAccountBySshKey",
+			Handler:    _AccountService_GetAccountBySshKey_Handler,
+		},
+		{
 			MethodName: "CreateSshKey",
 			Handler:    _AccountService_CreateSshKey_Handler,
 		},
@@ -357,10 +361,6 @@ var AccountService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSshKey",
 			Handler:    _AccountService_DeleteSshKey_Handler,
-		},
-		{
-			MethodName: "Authenticate",
-			Handler:    _AccountService_Authenticate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

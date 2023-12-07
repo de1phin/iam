@@ -157,7 +157,7 @@ func TestSameSshKeyProhibited(t *testing.T) {
 		accountId2 = "2"
 	)
 
-	_, sshPubKey = mustGenerateSshKey()
+	_, sshPubKey := mustGenerateSshKey()
 
 	ctx := context.Background()
 
@@ -219,7 +219,7 @@ func TestSshKeyValidCRUD(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, accoundId, createResp.GetKey().GetAccountId())
 	assert.Equal(t, sshPubKey1.Marshal(), createResp.GetKey().GetPublicKey())
-	assert.Equal(t, service.GetFingerprint(sshPubKey), createResp.GetKey().GetFingerprint())
+	assert.Equal(t, service.GetFingerprint(sshPubKey1), createResp.GetKey().GetFingerprint())
 	// check created_at is valid [-1s;now]
 	assert.True(t, createResp.GetKey().GetCreatedAt().IsValid())
 	assert.True(t, createResp.GetKey().GetCreatedAt().AsTime().Before(time.Now()))
@@ -234,7 +234,7 @@ func TestSshKeyValidCRUD(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, accoundId, createResp.GetKey().GetAccountId())
 	assert.Equal(t, sshPubKey2.Marshal(), createResp.GetKey().GetPublicKey())
-	assert.Equal(t, service.GetFingerprint(sshPubKey), createResp.GetKey().GetFingerprint())
+	assert.Equal(t, service.GetFingerprint(sshPubKey2), createResp.GetKey().GetFingerprint())
 	// check created_at is valid [-1s;now]
 	assert.True(t, createResp.GetKey().GetCreatedAt().IsValid())
 	assert.True(t, createResp.GetKey().GetCreatedAt().AsTime().Before(time.Now()))

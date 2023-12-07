@@ -4,6 +4,7 @@ import (
 	"context"
 
 	desc "github.com/de1phin/iam/genproto/services/token/api"
+	"github.com/de1phin/iam/pkg/sshutil"
 	"github.com/de1phin/iam/services/token/internal/mapping"
 	"github.com/de1phin/iam/services/token/internal/model"
 	"github.com/opentracing/opentracing-go"
@@ -19,7 +20,7 @@ type TokenFacade interface {
 }
 
 type AccountService interface {
-	Authenticate(ctx context.Context, ssh []byte) (string, error)
+	GetAccountBySshKey(ctx context.Context, sshPubKey []byte) (string, error)
 }
 
 type Implementation struct {
@@ -40,18 +41,23 @@ func (i *Implementation) GenerateToken(ctx context.Context, req *desc.GenerateTo
 	span, ctx := opentracing.StartSpanFromContext(ctx, "api/GenerateToken")
 	defer span.Finish()
 
-	if len(req.GetSshKey()) == 0 {
+	if len(req.GetSshPubKey()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "empty ssh")
 	}
 
-	token, err := i.token.GenerateToken(ctx, string(req.GetSshKey()))
+	token, err := i.token.GenerateToken(ctx, string(req.GetSshPubKey()))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	encryptedToken, err := sshutil.EncryptWithPublicKey([]byte(token.Token), []byte(req.GetSshPubKey()))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &desc.GenerateTokenResponse{
 		Token: &desc.Token{
-			Token:  token.Token,
+			Token:  string(encryptedToken),
 			Status: desc.TokenStatus_VALID,
 		},
 	}, nil
@@ -111,7 +117,7 @@ func (i *Implementation) CheckToken(ctx context.Context, req *desc.CheckTokenReq
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	userID, err := i.account.Authenticate(ctx, []byte(ssh))
+	userID, err := i.account.GetAccountBySshKey(ctx, []byte(ssh))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

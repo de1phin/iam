@@ -13,7 +13,7 @@ func mustGenerateSshKey() ([]byte, ssh.PublicKey) {
 	if err != nil {
 		panic(err)
 	}
-	sshPubKey, err = ssh.NewPublicKey(&rsaKey.PublicKey)
+	sshPubKey, err := ssh.NewPublicKey(&rsaKey.PublicKey)
 	if err != nil {
 		panic(err)
 	}
