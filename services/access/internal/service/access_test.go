@@ -30,7 +30,7 @@ func newTestEnv(t *testing.T) *testEnv {
 	}
 }
 
-func TestAccessService_HaveAccessBinding(t *testing.T) {
+func TestAccessService_CheckPermission(t *testing.T) {
 	env := newTestEnv(t)
 	t.Run("ValidTokenWithPermissions", func(t *testing.T) {
 		expectedToken := "validtoken"
@@ -49,7 +49,7 @@ func TestAccessService_HaveAccessBinding(t *testing.T) {
 			nil,
 		)
 
-		have, err := env.service.HaveAccessBinding(context.Background(), expectedToken, expectedResource, expectedPermission)
+		have, err := env.service.CheckPermission(context.Background(), expectedToken, expectedResource, expectedPermission)
 		require.NoError(t, err)
 		require.True(t, have)
 	})
@@ -70,7 +70,7 @@ func TestAccessService_HaveAccessBinding(t *testing.T) {
 			nil,
 		)
 
-		have, err := env.service.HaveAccessBinding(context.Background(), expectedToken, expectedResource, expectedPermission)
+		have, err := env.service.CheckPermission(context.Background(), expectedToken, expectedResource, expectedPermission)
 		require.NoError(t, err)
 		require.False(t, have)
 	})
@@ -79,7 +79,7 @@ func TestAccessService_HaveAccessBinding(t *testing.T) {
 
 		env.tokenValidatorMock.EXPECT().ValidateToken(gomock.Any(), expectedToken).Return("", false, nil)
 
-		_, err := env.service.HaveAccessBinding(context.Background(), expectedToken, "", "")
+		_, err := env.service.CheckPermission(context.Background(), expectedToken, "", "")
 		require.ErrorIs(t, err, core.ErrInvalidToken)
 	})
 

@@ -34,7 +34,7 @@ func (s *AccessService) AddAccessBinding(ctx context.Context, binding core.Acces
 	return s.store.AddAccessBinding(ctx, binding)
 }
 
-func (s *AccessService) HaveAccessBinding(ctx context.Context, token string, resource string, permission string) (bool, error) {
+func (s *AccessService) CheckPermission(ctx context.Context, token string, resource string, permission string) (bool, error) {
 	userID, isValid, err := s.tokenValidator.ValidateToken(ctx, token)
 	if err != nil {
 		return false, err
