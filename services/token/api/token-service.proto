@@ -30,7 +30,7 @@ message GenerateTokenResponse {
 }
 
 message RefreshTokenRequest {
-    bytes ssh_key = 1;
+    bytes token = 1;
 }
 
 message RefreshTokenResponse {

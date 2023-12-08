@@ -58,19 +58,6 @@ func (f *Facade) GenerateToken(ctx context.Context, ssh string) (*model.Token, e
 	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/GenerateToken")
 	defer span.Finish()
 
-	newToken := f.generator.Generate()
-
-	if err := f.repo.SetToken(ctx, ssh, newToken); err != nil {
-		return nil, err
-	}
-
-	return convertToModelToken(newToken), nil
-}
-
-func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/RefreshToken")
-	defer span.Finish()
-
 	token := f.generator.Generate()
 
 	if f.onlyCache {
@@ -107,6 +94,41 @@ func (f *Facade) RefreshToken(ctx context.Context, ssh string) (*model.Token, er
 	}
 
 	return convertToModelToken(token), nil
+}
+
+func (f *Facade) RefreshToken(ctx context.Context, token string) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "facade/RefreshToken")
+	defer span.Finish()
+
+	if f.onlyCache {
+		ssh, err := f.cache.GetSsh(ctx, token)
+		if err != nil {
+			return err
+		}
+		if err = f.cache.SetToken(ctx, ssh, token); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	ssh, err := f.repo.GetSsh(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	if err = f.repo.SetToken(ctx, ssh, token); err != nil {
+		return err
+	}
+
+	if err = f.cache.SetToken(ctx, ssh, token); err != nil {
+		logger.Error("cache SetToken", zap.Error(err))
+	}
+
+	if err = f.cache.SetSsh(ctx, token, ssh); err != nil {
+		logger.Error("cache SetSsh", zap.Error(err))
+	}
+
+	return nil
 }
 
 func (f *Facade) DeleteToken(ctx context.Context, ssh string) error {
