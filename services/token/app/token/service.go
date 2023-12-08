@@ -14,7 +14,7 @@ import (
 
 type TokenFacade interface {
 	GenerateToken(ctx context.Context, ssh string) (*model.Token, error)
-	RefreshToken(ctx context.Context, ssh string) (*model.Token, error)
+	RefreshToken(ctx context.Context, ssh string) error
 	DeleteToken(ctx context.Context, ssh string) error
 	GetSshByToken(ctx context.Context, tk model.Token) (string, error)
 }
@@ -67,18 +67,17 @@ func (i *Implementation) RefreshToken(ctx context.Context, req *desc.RefreshToke
 	span, ctx := opentracing.StartSpanFromContext(ctx, "api/RefreshToken")
 	defer span.Finish()
 
-	if len(req.GetSshKey()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty ssh")
+	if len(req.GetToken()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "empty token")
 	}
 
-	token, err := i.token.RefreshToken(ctx, string(req.GetSshKey()))
-	if err != nil {
+	if err := i.token.RefreshToken(ctx, string(req.GetToken())); err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	return &desc.RefreshTokenResponse{
 		Token: &desc.Token{
-			Token:  token.Token,
+			Token:  string(req.GetToken()),
 			Status: desc.TokenStatus_VALID,
 		},
 	}, nil
