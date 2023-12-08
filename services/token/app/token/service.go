@@ -73,7 +73,7 @@ func (i *Implementation) RefreshToken(ctx context.Context, req *desc.RefreshToke
 
 	token, err := i.token.RefreshToken(ctx, string(req.GetSshKey()))
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	return &desc.RefreshTokenResponse{
