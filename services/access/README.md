@@ -37,3 +37,4 @@ Access-service управляет полным цикл *Правил досту
 - Access-service предоставляет GRPC API для внешних сервисов
 - Access-service ходит к Token-service так же по GRPC API
 - В качестве хранилища данных предусмотрена СУБД PostgreSQL
+- 

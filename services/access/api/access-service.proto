@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package iam.services.auth;
+
+option go_package = "./token";
+
+service AccessService {
+  rpc AddRole (AddRoleRequest) returns (AddRoleResponse);
+  rpc GetRole (GetRoleRequest) returns (GetRoleResponse);
+  rpc DeleteRole (DeleteRoleRequest) returns (DeleteRoleResponse);
+
+  rpc AddAccessBinding (AddAccessBindingRequest) returns (AddAccessBindingResponse);
+  rpc CheckPermission (CheckPermissionRequest) returns (CheckPermissionResponse);
+  rpc DeleteAccessBinding (DeleteAccessBindingRequest) returns (DeleteAccessBindingResponse);
+}
+
+// Model specification
+
+message Role {
+  string name = 1;
+  repeated string permissions = 2;
+}
+
+message AccessBinding {
+  string user_id = 1;
+  string resource = 2;
+  string role_name =3;
+}
+
+// Role CRUD specification
+
+message AddRoleRequest {
+  Role role = 1;
+}
+
+message AddRoleResponse {}
+
+message GetRoleRequest {
+  string name = 1;
+}
+
+message GetRoleResponse {
+  Role role = 1;
+}
+
+message DeleteRoleRequest {
+  string name = 1;
+}
+
+message DeleteRoleResponse {}
+
+// AccessBinding CRUD specification;
+
+message AddAccessBindingRequest {
+  AccessBinding access_binding = 1;
+}
+
+message AddAccessBindingResponse {}
+
+message CheckPermissionRequest {
+  string token = 1;
+  string permission = 2;
+  string resource = 3;
+}
+
+message CheckPermissionResponse {
+  bool have_access = 1;
+}
+
+message DeleteAccessBindingRequest {
+  AccessBinding access_binding = 1;
+}
+
+message DeleteAccessBindingResponse {}
