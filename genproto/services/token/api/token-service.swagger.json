@@ -185,7 +185,7 @@
     "tokenCheckTokenResponse": {
       "type": "object",
       "properties": {
-        "user_id": {
+        "account_id": {
           "type": "string"
         },
         "status": {

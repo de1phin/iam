@@ -69,6 +69,6 @@ message CheckTokenRequest {
 }
 
 message CheckTokenResponse {
-    string user_id = 1;
+    string account_id = 1;
     TokenStatus status = 2;
 }
