@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: token-service
+spec:
+  selector:
+    matchLabels:
+      app: token-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: token-service
+    spec:
+      containers:
+      - image: "cr.yandex/crp7b3092gvddqsd8k3u/token-service:latest"
+        imagePullPolicy: Always
+        name: token-service
+        resources:
+          requests:
+            cpu: "300m"
+            memory: "256Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+        ports:
+        - protocol: TCP
+          containerPort: 8444
+          name: http
+      restartPolicy: Always

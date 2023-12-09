@@ -93,5 +93,5 @@ func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *s
 
 		logger.Info("sender server stop")
 	}()
-	return
+
 }
