@@ -3,5 +3,5 @@ service:
   account_address: account.iam.internal:8443
   connection_timeout: 10s
   token_dsn: aboba
-  token_length: 512
+  token_length: 64
   only_cache_mode: true

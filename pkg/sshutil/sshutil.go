@@ -39,11 +39,9 @@ func EncryptWithPublicKey(data []byte, key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode data: %w", err)
 	}
-	var buf []byte
-	base64.StdEncoding.Encode(buf, encryptedBytes)
-	return buf, nil
+	encoded := base64.StdEncoding.EncodeToString(encryptedBytes)
+	return []byte(encoded), nil
 }
-
 func DecryptWithPrivateKey(data []byte, key []byte) ([]byte, error) {
 	var base64decoded []byte
 	_, err := base64.StdEncoding.Decode(base64decoded, data)
