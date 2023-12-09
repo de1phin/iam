@@ -74,7 +74,7 @@ func (a *application) initClients(ctx context.Context) {
 }
 
 func (a *application) initGenerator() {
-	length := 512 // TODO config
+	length := 100 // TODO config
 
 	a.generator = generator.NewGenerator(length)
 }
@@ -103,6 +103,7 @@ func (a *application) initRepos() {
 }
 
 func (a *application) initFacade() {
+	a.onlyCacheMod = true
 	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, a.onlyCacheMod)
 }
 
@@ -111,16 +112,15 @@ func (a *application) initService() {
 }
 
 func (a *application) Run(ctx context.Context) error {
-	host := "token-service" // TODO
+	host := ":8080" // TODO
 	server.StartTokenService(ctx, a.service, a.wg, host)
+	server.InitTokenSwagger(ctx, a.wg, host)
 
 	return nil
 }
 
 func (a *application) Close() {
 	a.connections.database.Close()
-
-	a.wg.Wait()
 }
 
 func main() {
@@ -129,6 +129,7 @@ func main() {
 
 	app.wg.Add(1)
 	go func() {
+		defer app.wg.Done()
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		sig := <-c
@@ -141,4 +142,6 @@ func main() {
 	if err := app.Run(ctx); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
+
+	app.wg.Wait()
 }

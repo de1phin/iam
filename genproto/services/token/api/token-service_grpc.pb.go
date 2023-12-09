@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v4.24.4
-// source: services/token/api/token-service.proto
+// source: token/api/token-service.proto
 
 package token
 
@@ -216,5 +216,5 @@ var TokenService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "services/token/api/token-service.proto",
+	Metadata: "token/api/token-service.proto",
 }
