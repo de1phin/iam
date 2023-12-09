@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-service
+spec:
+  selector:
+    matchLabels:
+      app: account-service
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: account-service
+    spec:
+      containers:
+      - image: "cr.yandex/crp7b3092gvddqsd8k3u/account-service:latest"
+        imagePullPolicy: Always
+        name: account-service
+        resources:
+          requests:
+            cpu: "300m"
+            memory: "256Mi"
+          limits:
+            cpu: "300m"
+            memory: "256Mi"
+        ports:
+        - protocol: TCP
+          containerPort: 8443
+          name: http
+      restartPolicy: Always

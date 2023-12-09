@@ -1,18 +1,42 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/de1phin/iam/services/account/internal/database/cache"
 	"github.com/de1phin/iam/services/account/internal/server"
 	"github.com/de1phin/iam/services/account/internal/service"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v2"
 )
 
+type Config struct {
+	Server *server.AccountServiceServerConfig `yaml:"server"`
+}
+
+func readConfig(configPath string) *Config {
+	var cfg Config
+	bytes, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Fatal("failed to read config from ", configPath, ":", err)
+	}
+	err = yaml.Unmarshal(bytes, &cfg)
+	if err != nil {
+		log.Fatal("failed to unmarshal config - ", err)
+	}
+	return &cfg
+}
+
 func main() {
+	configPath := flag.String("config", "", "config path")
+	flag.Parse()
+
+	config := readConfig(*configPath)
+
 	accountCache := cache.NewAccountCache()
 	sshKeysCache := cache.NewSshKeyCache()
 
@@ -27,15 +51,11 @@ func main() {
 		logger = logger.With(zap.String("instance", instance))
 	}
 
-	cfg := &server.AccountServiceServerConfig{
-		AccountService:    service,
-		Logger:            logger,
-		Address:           ":8443",
-		ConnectionTimeout: time.Second * 30,
-		// *tls.Certificate
-	}
+	serverConfig := config.Server
+	serverConfig.AccountService = service
+	serverConfig.Logger = logger
 
-	srv, err := cfg.RunServer()
+	srv, err := serverConfig.RunServer()
 	if err != nil {
 		logger.Fatal("Failed to run server", zap.Error(err))
 	}

@@ -18,8 +18,8 @@ import (
 type AccountServiceServerConfig struct {
 	AccountService    *service.AccountService
 	Logger            *zap.Logger
-	Address           string
-	ConnectionTimeout time.Duration
+	Address           string        `yaml:"address"`
+	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
 	TlsCertificate    *tls.Certificate
 }
 
