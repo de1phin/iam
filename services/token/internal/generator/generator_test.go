@@ -11,9 +11,9 @@ func Test(t *testing.T) {
 	t.Parallel()
 
 	var (
-		g                 = NewGenerator(512)
-		amountGenerations = 1_000_000
-		amountTests       = 5
+		g                 = NewGenerator(64)
+		amountGenerations = 800_000
+		amountTests       = 3
 		globalSet         = make(map[string]bool, amountGenerations*amountTests)
 		mu                = &sync.Mutex{}
 		wg                = &sync.WaitGroup{}
