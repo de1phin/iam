@@ -1,0 +1,7 @@
+service:
+  token_address: 0.0.0.0:8444
+  account_address: 0.0.0.0:8443
+  connection_timeout: 10s
+  token_dsn: aboba
+  token_length: 512
+  only_cache_mode: true
