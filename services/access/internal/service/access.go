@@ -35,7 +35,7 @@ func (s *AccessService) AddAccessBinding(ctx context.Context, binding core.Acces
 }
 
 func (s *AccessService) CheckPermission(ctx context.Context, token string, resource string, permission string) (bool, error) {
-	userID, isValid, err := s.tokenValidator.ValidateToken(ctx, token)
+	accountID, isValid, err := s.tokenValidator.ValidateToken(ctx, token)
 	if err != nil {
 		return false, err
 	}
@@ -43,7 +43,7 @@ func (s *AccessService) CheckPermission(ctx context.Context, token string, resou
 		return false, core.ErrInvalidToken
 	}
 
-	return s.store.HaveAccessBinding(ctx, userID, resource, permission)
+	return s.store.HaveAccessBinding(ctx, accountID, resource, permission)
 }
 
 func (s *AccessService) DeleteAccessBinding(ctx context.Context, binding core.AccessBinding) error {

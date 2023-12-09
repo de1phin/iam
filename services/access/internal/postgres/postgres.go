@@ -54,7 +54,7 @@ func (s *Storage) initSchema(ctx context.Context) error {
 	);
 	
 	CREATE TABLE IF NOT EXISTS access_bindings (
-		user_id TEXT,
+		account_id TEXT,
 		role_name TEXT,
 		resource TEXT
 	);`

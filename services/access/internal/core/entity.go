@@ -1,9 +1,9 @@
 package core
 
 type AccessBinding struct {
-	UserID   string
-	RoleName string
-	Resource string
+	AccountID string
+	RoleName  string
+	Resource  string
 }
 
 type Role struct {

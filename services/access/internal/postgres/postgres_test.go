@@ -84,17 +84,17 @@ func TestStorage(t *testing.T) {
 		require.NoError(t, err)
 
 		expectedAB := core.AccessBinding{
-			UserID:   "khomyak",
-			RoleName: expectedRole.Name,
-			Resource: "ddx_fitness_shukinskaya",
+			AccountID: "khomyak",
+			RoleName:  expectedRole.Name,
+			Resource:  "ddx_fitness_shukinskaya",
 		}
 		err = env.store.AddAccessBinding(env.ctx, expectedAB)
 		require.NoError(t, err)
-		have, err := env.store.HaveAccessBinding(env.ctx, expectedAB.UserID, expectedAB.Resource, expectedPermission)
+		have, err := env.store.HaveAccessBinding(env.ctx, expectedAB.AccountID, expectedAB.Resource, expectedPermission)
 		require.NoError(t, err)
 		require.True(t, have)
 
-		have, err = env.store.HaveAccessBinding(env.ctx, expectedAB.UserID, expectedAB.Resource, unexpectedPermission)
+		have, err = env.store.HaveAccessBinding(env.ctx, expectedAB.AccountID, expectedAB.Resource, unexpectedPermission)
 		require.NoError(t, err)
 		require.False(t, have)
 

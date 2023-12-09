@@ -7,11 +7,13 @@ import (
 	"github.com/de1phin/iam/services/access/internal/core"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	mock "github.com/de1phin/iam/services/access/internal/service/mock"
 )
 
 type testEnv struct {
-	storageMock        *MockStorage
-	tokenValidatorMock *MockTokenValidator
+	storageMock        *mock.MockStorage
+	tokenValidatorMock *mock.MockTokenValidator
 	service            *AccessService
 }
 
@@ -19,8 +21,8 @@ func newTestEnv(t *testing.T) *testEnv {
 	t.Helper()
 
 	ctrl := gomock.NewController(t)
-	storageMock := NewMockStorage(ctrl)
-	tokenValidatorMock := NewMockTokenValidator(ctrl)
+	storageMock := mock.NewMockStorage(ctrl)
+	tokenValidatorMock := mock.NewMockTokenValidator(ctrl)
 	service := New(storageMock, tokenValidatorMock)
 
 	return &testEnv{
@@ -37,11 +39,11 @@ func TestAccessService_CheckPermission(t *testing.T) {
 		expectedPermission := "EatBatat"
 		expectedResource := "panfilova"
 
-		expectedUserID := "khomyak"
-		env.tokenValidatorMock.EXPECT().ValidateToken(gomock.Any(), expectedToken).Return(expectedUserID, true, nil)
+		expectedAccountID := "khomyak"
+		env.tokenValidatorMock.EXPECT().ValidateToken(gomock.Any(), expectedToken).Return(expectedAccountID, true, nil)
 		env.storageMock.EXPECT().HaveAccessBinding(
 			gomock.Any(),
-			expectedUserID,
+			expectedAccountID,
 			expectedResource,
 			expectedPermission,
 		).Return(
@@ -58,11 +60,11 @@ func TestAccessService_CheckPermission(t *testing.T) {
 		expectedPermission := "EatBatat"
 		expectedResource := "panfilova"
 
-		expectedUserID := "khomyak"
-		env.tokenValidatorMock.EXPECT().ValidateToken(gomock.Any(), expectedToken).Return(expectedUserID, true, nil)
+		expectedAccountID := "khomyak"
+		env.tokenValidatorMock.EXPECT().ValidateToken(gomock.Any(), expectedToken).Return(expectedAccountID, true, nil)
 		env.storageMock.EXPECT().HaveAccessBinding(
 			gomock.Any(),
-			expectedUserID,
+			expectedAccountID,
 			expectedResource,
 			expectedPermission,
 		).Return(

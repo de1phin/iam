@@ -13,6 +13,6 @@ type Storage interface {
 	DeleteRole(ctx context.Context, name string) error
 
 	AddAccessBinding(ctx context.Context, binding core.AccessBinding) error
-	HaveAccessBinding(ctx context.Context, userID string, resource string, permission string) (bool, error)
+	HaveAccessBinding(ctx context.Context, accountID string, resource string, permission string) (bool, error)
 	DeleteAccessBinding(ctx context.Context, binding core.AccessBinding) error
 }

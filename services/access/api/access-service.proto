@@ -22,7 +22,7 @@ message Role {
 }
 
 message AccessBinding {
-  string user_id = 1;
+  string account_id = 1;
   string resource = 2;
   string role_name =3;
 }

@@ -30,7 +30,7 @@ func NewTokenServiceClient(
 	}, nil
 }
 
-func (c *TokenServiceClient) ValidateToken(ctx context.Context, token string) (userID string, isValid bool, err error) {
+func (c *TokenServiceClient) ValidateToken(ctx context.Context, token string) (accountID string, isValid bool, err error) {
 	request := &tokenapi.CheckTokenRequest{Token: &tokenapi.Token{Token: token}}
 	response, err := c.api.CheckToken(ctx, request)
 	if err != nil {
@@ -39,5 +39,5 @@ func (c *TokenServiceClient) ValidateToken(ctx context.Context, token string) (u
 	if response.Status == tokenapi.TokenStatus_UNDEFINED {
 		return "", false, nil
 	}
-	return response.UserId, true, nil
+	return response.GetAccountId(), true, nil
 }
