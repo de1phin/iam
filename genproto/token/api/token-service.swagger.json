@@ -1,0 +1,261 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "token/api/token-service.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/token/check": {
+      "post": {
+        "operationId": "TokenService_CheckToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tokenCheckTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tokenCheckTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/v1/token/delete": {
+      "post": {
+        "operationId": "TokenService_DeleteToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tokenRemoveTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tokenRemoveTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/v1/token/generate": {
+      "post": {
+        "operationId": "TokenService_GenerateToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tokenGenerateTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tokenGenerateTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    },
+    "/v1/token/refresh": {
+      "post": {
+        "operationId": "TokenService_RefreshToken",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/tokenRefreshTokenResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tokenRefreshTokenRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TokenService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "tokenCheckTokenRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/tokenToken"
+        }
+      }
+    },
+    "tokenCheckTokenResponse": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/tokenTokenStatus"
+        }
+      }
+    },
+    "tokenGenerateTokenRequest": {
+      "type": "object",
+      "properties": {
+        "ssh_pub_key": {
+          "type": "string"
+        }
+      }
+    },
+    "tokenGenerateTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/tokenToken"
+        }
+      }
+    },
+    "tokenRefreshTokenRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "tokenRefreshTokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/definitions/tokenToken"
+        }
+      }
+    },
+    "tokenRemoveTokenRequest": {
+      "type": "object",
+      "properties": {
+        "ssh_key": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "tokenRemoveTokenResponse": {
+      "type": "object"
+    },
+    "tokenToken": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/tokenTokenStatus"
+        }
+      }
+    },
+    "tokenTokenStatus": {
+      "type": "string",
+      "enum": [
+        "UNDEFINED",
+        "VALID"
+      ],
+      "default": "UNDEFINED"
+    }
+  }
+}

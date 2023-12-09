@@ -1,4 +1,4 @@
-package yccli
+package yc
 
 import (
 	"encoding/json"

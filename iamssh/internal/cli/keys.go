@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/de1phin/iam/iamssh/pkg/yccli"
+	yc "github.com/de1phin/iam/iamssh/pkg/yccli"
 	"github.com/spf13/cobra"
 )
 
@@ -41,8 +41,9 @@ var loadKeyCmd = &cobra.Command{
 }
 
 func loadKeyFromLockbox() (*sshKey, error) {
+	lockbox := yc.NewLockboxClient().WithTokenGetter(yc.YcCli())
 
-	secrets, err := yccli.ListLockboxSecrets(FolderId)
+	secrets, err := lockbox.ListSecrets(FolderId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list lockbox secrets: %w", err)
 	}
@@ -59,7 +60,7 @@ func loadKeyFromLockbox() (*sshKey, error) {
 		return nil, fmt.Errorf("no secret with name %s in folder %s", LockBoxKeysName, FolderId)
 	}
 
-	secret, err := yccli.LockboxSecretGet(secretId)
+	secret, err := lockbox.GetSecret(secretId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lockbox secret: %w", err)
 	}
