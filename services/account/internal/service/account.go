@@ -8,11 +8,11 @@ import (
 	"math/rand"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
+	"github.com/de1phin/iam/pkg/sshutil"
 	"github.com/de1phin/iam/pkg/stringutil"
 	"github.com/de1phin/iam/services/account/internal/database"
 	"github.com/de1phin/iam/services/account/pkg/ctxlog"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -207,7 +207,7 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 func (s *AccountService) GetAccountBySshKey(_ context.Context, req *account.GetAccountBySshKeyRequest) (*account.GetAccountBySshKeyResponse, error) {
 	logger := s.logger.Named("GetAccountBySshKey")
 
-	sshPubKey, err := ssh.ParsePublicKey(req.GetSshPubKey())
+	sshPubKey, err := sshutil.ParsePublicKey(req.GetSshPubKey())
 	if err != nil {
 		logger.Debug("Ssh Public key parsing failed", zap.ByteString("public key", req.GetSshPubKey()))
 		return nil, status.Error(codes.InvalidArgument, "Invalid ssh public key")

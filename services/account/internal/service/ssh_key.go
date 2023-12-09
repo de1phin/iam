@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
+	"github.com/de1phin/iam/pkg/sshutil"
 	"github.com/de1phin/iam/services/account/internal/database"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
@@ -30,7 +31,7 @@ func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshK
 		return nil, ErrorInternal()
 	}
 
-	pubKey, err := ssh.ParsePublicKey(req.GetPublicKey())
+	pubKey, err := sshutil.ParsePublicKey(req.GetPublicKey())
 	if err != nil {
 		logger.Debug("Ssh Public Key parsing failed", zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "Failed to parse ssh public key")
