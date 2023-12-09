@@ -16,6 +16,10 @@ module "iam" {
         {
         "dbname": "token-service"
         "user": "token-service-user"
+        },
+        {
+        "dbname": "access-service"
+        "user": "access-service-user"
         }
     ]
 
