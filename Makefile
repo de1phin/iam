@@ -17,3 +17,12 @@ $(proto):
 
 test:
 	go test ./...
+
+gen-token-service:
+	protoc -I ./services \
+       --go_out ./genproto/services --go_opt paths=source_relative \
+       --go-grpc_out ./genproto/services --go-grpc_opt paths=source_relative \
+       --swagger_out=./genproto/services \
+	   --swagger_opt=logtostderr=true \
+       --grpc-gateway_out ./genproto/services --grpc-gateway_opt paths=source_relative \
+       ./services/token/api/token-service.proto

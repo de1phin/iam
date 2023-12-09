@@ -122,6 +122,6 @@ func (i *Implementation) CheckToken(ctx context.Context, req *desc.CheckTokenReq
 	}
 
 	return &desc.CheckTokenResponse{
-		UserId: userID,
+		AccountId: userID,
 	}, nil
 }

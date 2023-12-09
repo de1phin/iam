@@ -110,13 +110,14 @@ func (a *application) initService() {
 }
 
 func (a *application) Run(ctx context.Context) error {
-	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.TokenAddress)
+	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.GrpcAddress)
+	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.TokenAddress, a.cfg.Service.GrpcAddress)
 
 	return nil
 }
 
 func (a *application) Close() {
-	if a.connections.database != nil {
+	if !a.cfg.Service.OnlyCacheMode {
 		a.connections.database.Close()
 	}
 }
@@ -132,6 +133,7 @@ func main() {
 
 	app.wg.Add(1)
 	go func() {
+		defer app.wg.Done()
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		sig := <-c
@@ -167,6 +169,8 @@ type Config struct {
 
 type TokenService struct {
 	TokenAddress      string        `yaml:"token_address"`
+	GrpcAddress       string        `yaml:"grpc_address"`
+	SwaggerAddress    string        `yaml:"swagger_address"`
 	AccountAddress    string        `yaml:"account_address"`
 	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
 	Dsn               string        `yaml:"token_dsn"`

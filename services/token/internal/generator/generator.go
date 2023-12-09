@@ -1,10 +1,9 @@
 package generator
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"encoding/hex"
 )
-
-const charset = "ABCDEFGHIJKLMOPQRSTUVWXZabcedefghijklmnopqrstuvwxz0123456789+_-="
 
 type Generator struct {
 	length int
@@ -17,9 +16,10 @@ func NewGenerator(length int) *Generator {
 }
 
 func (g *Generator) Generate() string {
-	id := ""
-	for i := 0; i < g.length; i++ {
-		id += string(charset[rand.Intn(len(charset))])
+	bytes := make([]byte, g.length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return ""
 	}
-	return id
+	return hex.EncodeToString(bytes)
 }
