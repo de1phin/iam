@@ -82,16 +82,14 @@ func (a *application) initGenerator() {
 }
 
 func (a *application) initConnections(ctx context.Context) {
-	memcached := memcache.NewCache[string, []byte]()
+	a.connections.memcached = memcache.NewCache[string, []byte]()
 
-	db, err := database.NewDatabase(ctx, a.cfg.Service.Dsn)
-	if err != nil {
-		logger.Error("init connect to database, only cached mode turn on", zap.Error(err))
-	}
-
-	a.connections = connections{
-		memcached: memcached,
-		database:  db,
+	if !a.cfg.Service.OnlyCacheMode {
+		var err error
+		a.connections.database, err = database.NewDatabase(ctx, a.cfg.Service.Dsn)
+		if err != nil {
+			logger.Error("init connect to database", zap.Error(err))
+		}
 	}
 }
 
@@ -125,7 +123,7 @@ func (a *application) Close() {
 func main() {
 	configPath := flag.String("config", "", "config path")
 	flag.Parse()
-	
+
 	config := readConfig(*configPath)
 
 	ctx, cancel := context.WithCancel(context.Background())
