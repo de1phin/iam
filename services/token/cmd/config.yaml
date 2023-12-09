@@ -1,6 +1,6 @@
 service:
   token_address: 0.0.0.0:8444
-  account_address: 0.0.0.0:8443
+  account_address: account.iam.internal:8443
   connection_timeout: 10s
   token_dsn: aboba
   token_length: 512
