@@ -17,54 +17,7 @@ const (
 
 var modelToken = &model.Token{Token: token}
 
-func Test_GenerateToken(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		expect    *model.Token
-		expectErr error
-
-		setTokenErr error
-	}{
-		{
-			name:      "ok",
-			expect:    convertToModelToken(token),
-			expectErr: nil,
-
-			setTokenErr: nil,
-		},
-		{
-			name:      "SetToken Error",
-			expect:    nil,
-			expectErr: assert.AnError,
-
-			setTokenErr: assert.AnError,
-		},
-	}
-	for _, test := range tests {
-		test := test
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			var (
-				repo      = &mocks.Repository{}
-				generator = &mocks.Generator{}
-			)
-
-			generator.EXPECT().Generate().Return(token)
-			repo.EXPECT().SetToken(mock.Anything, ssh, mock.Anything).Return(test.setTokenErr)
-
-			facade := NewFacade(&mocks.Cache{}, repo, generator, true)
-
-			actual, err := facade.GenerateToken(context.Background(), ssh)
-			assert.Equal(t, test.expect, actual)
-			assert.ErrorIs(t, test.expectErr, err)
-		})
-	}
-}
-
-func Test_onlyCache_RefreshToken(t *testing.T) {
+func Test_onlyCache_GenerateToken(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -112,7 +65,7 @@ func Test_onlyCache_RefreshToken(t *testing.T) {
 
 			facade := NewFacade(cache, &mocks.Repository{}, generator, test.onlyCache)
 
-			actual, err := facade.RefreshToken(context.Background(), ssh)
+			actual, err := facade.GenerateToken(context.Background(), ssh)
 			assert.Equal(t, test.expect, actual)
 			assert.ErrorIs(t, test.expectErr, err)
 		})

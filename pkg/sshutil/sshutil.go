@@ -4,9 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/base64"
-	"encoding/pem"
 	"fmt"
 
 	"golang.org/x/crypto/ssh"
@@ -39,24 +37,21 @@ func EncryptWithPublicKey(data []byte, key []byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode data: %w", err)
 	}
-	var buf []byte
-	base64.StdEncoding.Encode(buf, encryptedBytes)
-	return buf, nil
+	encoded := base64.StdEncoding.EncodeToString(encryptedBytes)
+	return []byte(encoded), nil
 }
-
 func DecryptWithPrivateKey(data []byte, key []byte) ([]byte, error) {
-	var base64decoded []byte
-	_, err := base64.StdEncoding.Decode(base64decoded, data)
+	base64decoded, err := base64.StdEncoding.DecodeString(string(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode base64: %w", err)
 	}
 
-	pemBlock, _ := pem.Decode(key)
-
-	privateKey, err := x509.ParsePKCS1PrivateKey(pemBlock.Bytes)
+	sshPrivateKey, err := ssh.ParseRawPrivateKey(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
+
+	privateKey := sshPrivateKey.(*rsa.PrivateKey)
 
 	decrypted, err := rsa.DecryptOAEP(
 		sha256.New(),
@@ -68,4 +63,18 @@ func DecryptWithPrivateKey(data []byte, key []byte) ([]byte, error) {
 		return nil, fmt.Errorf("failed to decrypt data: %w", err)
 	}
 	return decrypted, nil
+}
+
+func ParsePublicKey(data []byte) (ssh.PublicKey, error) {
+	key, err := ssh.ParsePublicKey(data)
+	if err == nil {
+		return key, nil
+	}
+
+	pk, _, _, _, err := ssh.ParseAuthorizedKey(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return ssh.ParsePublicKey(pk.Marshal())
 }

@@ -1,7 +1,8 @@
-package yccli
+package yc
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,20 @@ type LockboxSecret struct {
 	Id   string `json:"id"`
 }
 
-func ListLockboxSecrets(folderId string) ([]LockboxSecret, error) {
+type LockboxClient struct {
+	TokenGetter TokenGetter
+}
+
+func NewLockboxClient() *LockboxClient {
+	return &LockboxClient{}
+}
+
+func (lc *LockboxClient) WithTokenGetter(tg TokenGetter) *LockboxClient {
+	lc.TokenGetter = tg
+	return lc
+}
+
+func (lc *LockboxClient) ListSecrets(folderId string) ([]LockboxSecret, error) {
 	secretsRaw, err := ycExecute("lockbox", "secret", "list", "--folder-id", folderId, "--format", "json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to list lockbox secrets: %w", err)
@@ -38,8 +52,12 @@ type LockboxSecretGetResponse struct {
 	VersionId string               `json:"versionId"`
 }
 
-func LockboxSecretGet(secretId string) (*LockboxSecretGetResponse, error) {
-	token, err := GetIamToken()
+func (lc *LockboxClient) GetSecret(secretId string) (*LockboxSecretGetResponse, error) {
+	if lc.TokenGetter == nil {
+		return nil, errors.New("toker required but no TokenGetter provided")
+	}
+
+	token, err := lc.TokenGetter.GetToken()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get iam token: %w", err)
 	}

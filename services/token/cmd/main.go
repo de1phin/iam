@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"flag"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
 	memcache "github.com/de1phin/iam/pkg/cache"
@@ -20,6 +23,8 @@ import (
 	"github.com/de1phin/iam/services/token/internal/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"gopkg.in/yaml.v2"
 )
 
 type connections struct {
@@ -44,13 +49,14 @@ type application struct {
 	facade       *facade.Facade
 	service      *token_service.Implementation
 
-	wg           *sync.WaitGroup
-	onlyCacheMod bool
+	cfg Config
+	wg  *sync.WaitGroup
 }
 
-func newApp(ctx context.Context) *application {
+func newApp(ctx context.Context, cfg *Config) *application {
 	var a = application{
-		wg: &sync.WaitGroup{},
+		cfg: *cfg,
+		wg:  &sync.WaitGroup{},
 	}
 
 	a.initClients(ctx)
@@ -64,8 +70,7 @@ func newApp(ctx context.Context) *application {
 }
 
 func (a *application) initClients(ctx context.Context) {
-	host := "account-service" // TODO
-	conn, err := grpc.DialContext(ctx, host)
+	conn, err := grpc.DialContext(ctx, a.cfg.Service.AccountAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("connect to account-service", zap.Error(err))
 	}
@@ -74,24 +79,18 @@ func (a *application) initClients(ctx context.Context) {
 }
 
 func (a *application) initGenerator() {
-	length := 512 // TODO config
-
-	a.generator = generator.NewGenerator(length)
+	a.generator = generator.NewGenerator(a.cfg.Service.TokenLength)
 }
 
 func (a *application) initConnections(ctx context.Context) {
-	memcached := memcache.NewCache[string, []byte]()
+	a.connections.memcached = memcache.NewCache[string, []byte]()
 
-	dsn := "" // TODO
-	db, err := database.NewDatabase(ctx, dsn)
-	if err != nil {
-		logger.Error("init connect to database, only cached mode turn on", zap.Error(err))
-		a.onlyCacheMod = true
-	}
-
-	a.connections = connections{
-		memcached: memcached,
-		database:  db,
+	if !a.cfg.Service.OnlyCacheMode {
+		var err error
+		a.connections.database, err = database.NewDatabase(ctx, a.cfg.Service.Dsn)
+		if err != nil {
+			logger.Error("init connect to database", zap.Error(err))
+		}
 	}
 }
 
@@ -103,7 +102,7 @@ func (a *application) initRepos() {
 }
 
 func (a *application) initFacade() {
-	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, a.onlyCacheMod)
+	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, a.cfg.Service.OnlyCacheMode)
 }
 
 func (a *application) initService() {
@@ -111,24 +110,30 @@ func (a *application) initService() {
 }
 
 func (a *application) Run(ctx context.Context) error {
-	host := "token-service" // TODO
-	server.StartTokenService(ctx, a.service, a.wg, host)
+	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.GrpcAddress)
+	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.SwaggerAddress, a.cfg.Service.GrpcAddress)
 
 	return nil
 }
 
 func (a *application) Close() {
-	a.connections.database.Close()
-
-	a.wg.Wait()
+	if !a.cfg.Service.OnlyCacheMode {
+		a.connections.database.Close()
+	}
 }
 
 func main() {
+	configPath := flag.String("config", "", "config path")
+	flag.Parse()
+
+	config := readConfig(*configPath)
+
 	ctx, cancel := context.WithCancel(context.Background())
-	app := newApp(ctx)
+	app := newApp(ctx, config)
 
 	app.wg.Add(1)
 	go func() {
+		defer app.wg.Done()
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 		sig := <-c
@@ -141,4 +146,33 @@ func main() {
 	if err := app.Run(ctx); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
+
+	app.wg.Wait()
+}
+
+func readConfig(configPath string) *Config {
+	var cfg Config
+	bytes, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Fatal("failed to read config from ", configPath, ":", err)
+	}
+	err = yaml.Unmarshal(bytes, &cfg)
+	if err != nil {
+		log.Fatal("failed to unmarshal config - ", err)
+	}
+	return &cfg
+}
+
+type Config struct {
+	Service TokenService `yaml:"service"`
+}
+
+type TokenService struct {
+	SwaggerAddress    string        `yaml:"swagger_address"`
+	GrpcAddress       string        `yaml:"grpc_address"`
+	AccountAddress    string        `yaml:"account_address"`
+	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
+	Dsn               string        `yaml:"token_dsn"`
+	OnlyCacheMode     bool          `yaml:"only_cache_mode"`
+	TokenLength       int           `yaml:"token_length"`
 }

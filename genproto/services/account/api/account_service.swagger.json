@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "services/account/api/account_service.proto",
+    "title": "account/api/account_service.proto",
     "version": "version not set"
   },
   "consumes": [
@@ -30,14 +30,6 @@
         }
       }
     },
-    "accountAuthenticateResponse": {
-      "type": "object",
-      "properties": {
-        "account_id": {
-          "type": "string"
-        }
-      }
-    },
     "accountCreateAccountResponse": {
       "type": "object",
       "properties": {
@@ -56,6 +48,17 @@
     },
     "accountDeleteAccountResponse": {
       "type": "object"
+    },
+    "accountDeleteSshKeyResponse": {
+      "type": "object"
+    },
+    "accountGetAccountBySshKeyResponse": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string"
+        }
+      }
     },
     "accountGetAccountResponse": {
       "type": "object",
@@ -82,18 +85,19 @@
         "fingerprint": {
           "type": "string"
         },
+        "account_id": {
+          "type": "string"
+        },
         "public_key": {
           "type": "string",
           "format": "byte"
-        },
-        "account_id": {
-          "type": "string"
         },
         "created_at": {
           "type": "string",
           "format": "date-time"
         }
-      }
+      },
+      "title": "fingerprint+account_id uniquely identifies a key"
     },
     "accountUpdateAccountResponse": {
       "type": "object",
