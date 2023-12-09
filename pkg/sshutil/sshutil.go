@@ -71,6 +71,11 @@ func DecryptWithPrivateKey(data []byte, key []byte) ([]byte, error) {
 }
 
 func ParsePublicKey(data []byte) (ssh.PublicKey, error) {
+	key, err := ssh.ParsePublicKey(data)
+	if err == nil {
+		return key, nil
+	}
+
 	pk, _, _, _, err := ssh.ParseAuthorizedKey(data)
 	if err != nil {
 		return nil, err
