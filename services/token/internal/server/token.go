@@ -17,7 +17,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, tokenHost, grpcHost string) {
+func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, swaggerHost, grpcHost string) {
 	httpMux := http.NewServeMux()
 
 	relativePath := "./genproto/services/token/api/token-service.swagger.json"
@@ -31,7 +31,7 @@ func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, tokenHost, grpcHo
 	})
 
 	httpMux.HandleFunc("/swagger/", httpSwagger.Handler(
-		httpSwagger.URL("http://"+tokenHost+"/swagger.json"),
+		httpSwagger.URL("http://"+swaggerHost+"/swagger.json"),
 	))
 
 	grpcMux := runtime.NewServeMux()
@@ -44,7 +44,7 @@ func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, tokenHost, grpcHo
 		defer wg.Done()
 
 		srv := &http.Server{
-			Addr: tokenHost,
+			Addr: swaggerHost,
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if strings.HasPrefix(r.URL.Path, "/swagger") {
 					httpMux.ServeHTTP(w, r)

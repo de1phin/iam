@@ -1,6 +1,6 @@
 service:
   token_address: 0.0.0.0:8444
-  grpc_address: 0.0.0.0:8445
+  swagger_address: 0.0.0.0:8445
   account_address: account.iam.internal:8443
   connection_timeout: 10s
   token_dsn: aboba
