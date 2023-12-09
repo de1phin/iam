@@ -1,0 +1,105 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "access/api/access-service.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "authAccessBinding": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "role_name": {
+          "type": "string"
+        }
+      }
+    },
+    "authAddAccessBindingResponse": {
+      "type": "object"
+    },
+    "authAddRoleResponse": {
+      "type": "object"
+    },
+    "authCheckPermissionResponse": {
+      "type": "object",
+      "properties": {
+        "have_access": {
+          "type": "boolean"
+        }
+      }
+    },
+    "authDeleteAccessBindingResponse": {
+      "type": "object"
+    },
+    "authDeleteRoleResponse": {
+      "type": "object"
+    },
+    "authGetRoleResponse": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "$ref": "#/definitions/authRole"
+        }
+      }
+    },
+    "authRole": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
