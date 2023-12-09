@@ -9,6 +9,7 @@ import (
 	"github.com/de1phin/iam/pkg/logger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *sync.WaitGroup, host string) {
@@ -18,6 +19,7 @@ func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *s
 	}
 	server := grpc.NewServer()
 	token.RegisterTokenServiceServer(server, serv)
+	reflection.Register(server)
 
 	go func() {
 		logger.Info("token-service start")
@@ -34,5 +36,5 @@ func StartTokenService(ctx context.Context, serv token.TokenServiceServer, wg *s
 
 		logger.Info("sender server stop")
 	}()
-	return
+
 }

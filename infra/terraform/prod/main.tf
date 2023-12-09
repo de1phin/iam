@@ -29,6 +29,17 @@ module "iam" {
             "ip": "158.160.133.43"
             "hostname": "account"
             "public": true
+        },
+
+        {
+            "ip": "10.96.151.216"
+            "hostname": "token"
+            "public": false
+        },
+        {
+            "ip": "158.160.131.19"
+            "hostname": "token"
+            "public": true
         }
     ]
 }

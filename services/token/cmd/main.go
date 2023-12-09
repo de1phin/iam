@@ -23,6 +23,7 @@ import (
 	"github.com/de1phin/iam/services/token/internal/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/yaml.v2"
 )
 
@@ -69,7 +70,7 @@ func newApp(ctx context.Context, cfg *Config) *application {
 }
 
 func (a *application) initClients(ctx context.Context) {
-	conn, err := grpc.DialContext(ctx, a.cfg.Service.AccountAddress)
+	conn, err := grpc.DialContext(ctx, a.cfg.Service.AccountAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("connect to account-service", zap.Error(err))
 	}
@@ -115,9 +116,9 @@ func (a *application) Run(ctx context.Context) error {
 }
 
 func (a *application) Close() {
-	a.connections.database.Close()
-
-	a.wg.Wait()
+	if a.connections.database != nil {
+		a.connections.database.Close()
+	}
 }
 
 func main() {
@@ -143,6 +144,8 @@ func main() {
 	if err := app.Run(ctx); err != nil {
 		logger.Fatal("can't run app", zap.Error(err))
 	}
+
+	app.wg.Wait()
 }
 
 func readConfig(configPath string) *Config {
