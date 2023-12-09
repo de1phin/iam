@@ -116,12 +116,12 @@ func (i *Implementation) CheckToken(ctx context.Context, req *desc.CheckTokenReq
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	userID, err := i.account.GetAccountBySshKey(ctx, []byte(ssh))
+	accountID, err := i.account.GetAccountBySshKey(ctx, []byte(ssh))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &desc.CheckTokenResponse{
-		AccountId: userID,
+		AccountId: accountID,
 	}, nil
 }
