@@ -10,8 +10,8 @@ import (
 
 	token "github.com/de1phin/iam/genproto/services/token/api"
 	"github.com/de1phin/iam/pkg/logger"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/swaggo/http-swagger"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

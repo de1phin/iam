@@ -1,10 +1,11 @@
 module github.com/de1phin/iam
 
-go 1.21
+go 1.20
 
 require (
 	github.com/georgysavva/scany v1.1.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
+	github.com/golang/protobuf v1.5.3
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/jackc/pgconn v1.8.0
 	github.com/jackc/pgx/v4 v4.10.1
 	github.com/opentracing/opentracing-go v1.2.0
@@ -26,7 +27,7 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/spec v0.20.11 // indirect
 	github.com/go-openapi/swag v0.22.4 // indirect
-	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
