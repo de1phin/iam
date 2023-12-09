@@ -23,6 +23,7 @@ import (
 	"github.com/de1phin/iam/services/token/internal/server"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/yaml.v2"
 )
 
@@ -69,7 +70,7 @@ func newApp(ctx context.Context, cfg *Config) *application {
 }
 
 func (a *application) initClients(ctx context.Context) {
-	conn, err := grpc.DialContext(ctx, a.cfg.Service.AccountAddress)
+	conn, err := grpc.DialContext(ctx, a.cfg.Service.AccountAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Fatal("connect to account-service", zap.Error(err))
 	}
@@ -109,14 +110,16 @@ func (a *application) initService() {
 }
 
 func (a *application) Run(ctx context.Context) error {
-	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.TokenAddress)
-	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.TokenAddress)
+	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.GrpcAddress)
+	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.TokenAddress, a.cfg.Service.GrpcAddress)
 
 	return nil
 }
 
 func (a *application) Close() {
-	a.connections.database.Close()
+	if !a.cfg.Service.OnlyCacheMode {
+		a.connections.database.Close()
+	}
 }
 
 func main() {
@@ -166,6 +169,8 @@ type Config struct {
 
 type TokenService struct {
 	TokenAddress      string        `yaml:"token_address"`
+	GrpcAddress       string        `yaml:"grpc_address"`
+	SwaggerAddress    string        `yaml:"swagger_address"`
 	AccountAddress    string        `yaml:"account_address"`
 	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
 	Dsn               string        `yaml:"token_dsn"`

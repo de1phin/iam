@@ -1,4 +1,4 @@
-proto = services/token/api
+proto = services/account/api services/token/api
 
 .PHONY: generate, $(proto)
 
@@ -9,12 +9,10 @@ $(proto):
 	if [[ ! -d '${PATH_OUT}' ]]; then \
 		mkdir -p '${PATH_OUT}'; \
 	fi; \
-	protoc -I ./services \
-	    --go_out=${PATH_OUT} --go_opt=paths=source_relative \
+	protoc --go_out=${PATH_OUT} --go_opt=paths=source_relative \
 		--go-grpc_out=${PATH_OUT} --go-grpc_opt=paths=source_relative \
 		--swagger_out=${PATH_OUT} \
 		--swagger_opt=logtostderr=true \
-       	--grpc-gateway_out ${PATH_OUT} --grpc-gateway_opt paths=source_relative \
 		$(shell find ./$@ -iname "*.proto")
 
 test:

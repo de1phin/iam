@@ -17,22 +17,25 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, host string) {
+func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, tokenHost, grpcHost string) {
 	httpMux := http.NewServeMux()
 
-	relativePath := "/Users/ivakhomyakov/labs/iam/genproto/services/token/api/token-service.swagger.json"
-	absolutePath, _ := filepath.Abs(relativePath)
+	relativePath := "./genproto/services/token/api/token-service.swagger.json"
+	absolutePath, err := filepath.Abs(relativePath)
+	if err != nil {
+		logger.Error("build absolutePath", zap.Error(err))
+	}
 
 	httpMux.HandleFunc("/swagger.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, absolutePath)
 	})
 
 	httpMux.HandleFunc("/swagger/", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8082/swagger.json"),
+		httpSwagger.URL("http://"+tokenHost+"/swagger.json"),
 	))
 
 	grpcMux := runtime.NewServeMux()
-	if err := token.RegisterTokenServiceHandlerFromEndpoint(ctx, grpcMux, ":8080", []grpc.DialOption{grpc.WithInsecure()}); err != nil {
+	if err := token.RegisterTokenServiceHandlerFromEndpoint(ctx, grpcMux, grpcHost, []grpc.DialOption{grpc.WithInsecure()}); err != nil {
 		logger.Error("failed to register gateway handler", zap.Error(err))
 	}
 
@@ -41,7 +44,7 @@ func InitTokenSwagger(ctx context.Context, wg *sync.WaitGroup, host string) {
 		defer wg.Done()
 
 		srv := &http.Server{
-			Addr: ":8082",
+			Addr: tokenHost,
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if strings.HasPrefix(r.URL.Path, "/swagger") {
 					httpMux.ServeHTTP(w, r)
