@@ -74,6 +74,7 @@ resource "yandex_dns_zone" "internal" {
   zone = "${var.internal_dns_domain}."
   folder_id = var.folder_id
   public = false
+  private_networks = [ yandex_vpc_network.default.id ]
 }
 
 resource "yandex_dns_recordset" "nlb" {
