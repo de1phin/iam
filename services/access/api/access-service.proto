@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package iam.services.auth;
+package iam.services.access;
 
-option go_package = "./token";
+option go_package = "./access";
 
 service AccessService {
   rpc AddRole (AddRoleRequest) returns (AddRoleResponse);
@@ -63,9 +63,7 @@ message CheckPermissionRequest {
   string resource = 3;
 }
 
-message CheckPermissionResponse {
-  bool have_access = 1;
-}
+message CheckPermissionResponse {}
 
 message DeleteAccessBindingRequest {
   AccessBinding access_binding = 1;

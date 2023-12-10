@@ -45,11 +45,9 @@ func main() {
 		service.SshKeyDatabase(sshKeysCache),
 	)
 
-	logger := zap.Must(zap.NewProduction()).Named("AccountService")
-	instance := os.Getenv("INSTANCE")
-	if instance != "" {
-		logger = logger.With(zap.String("instance", instance))
-	}
+	zapCfg := zap.NewProductionConfig()
+	zapCfg.OutputPaths = []string{"stdout"}
+	logger := zap.Must(zapCfg.Build()).Named("AccountService")
 
 	serverConfig := config.Server
 	serverConfig.AccountService = service

@@ -44,6 +44,12 @@ module "iam" {
             "ip": "158.160.131.19"
             "hostname": "token"
             "public": true
+        },
+
+        {
+            "ip": "10.96.168.208"
+            "hostname": "access"
+            "public": false
         }
     ]
 }

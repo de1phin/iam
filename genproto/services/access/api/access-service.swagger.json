@@ -12,7 +12,7 @@
   ],
   "paths": {},
   "definitions": {
-    "authAccessBinding": {
+    "accessAccessBinding": {
       "type": "object",
       "properties": {
         "account_id": {
@@ -26,35 +26,30 @@
         }
       }
     },
-    "authAddAccessBindingResponse": {
+    "accessAddAccessBindingResponse": {
       "type": "object"
     },
-    "authAddRoleResponse": {
+    "accessAddRoleResponse": {
       "type": "object"
     },
-    "authCheckPermissionResponse": {
-      "type": "object",
-      "properties": {
-        "have_access": {
-          "type": "boolean"
-        }
-      }
-    },
-    "authDeleteAccessBindingResponse": {
+    "accessCheckPermissionResponse": {
       "type": "object"
     },
-    "authDeleteRoleResponse": {
+    "accessDeleteAccessBindingResponse": {
       "type": "object"
     },
-    "authGetRoleResponse": {
+    "accessDeleteRoleResponse": {
+      "type": "object"
+    },
+    "accessGetRoleResponse": {
       "type": "object",
       "properties": {
         "role": {
-          "$ref": "#/definitions/authRole"
+          "$ref": "#/definitions/accessRole"
         }
       }
     },
-    "authRole": {
+    "accessRole": {
       "type": "object",
       "properties": {
         "name": {

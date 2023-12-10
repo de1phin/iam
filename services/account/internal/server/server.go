@@ -1,7 +1,6 @@
 package server
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
@@ -11,7 +10,6 @@ import (
 	"github.com/de1phin/iam/services/account/internal/service"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -20,7 +18,6 @@ type AccountServiceServerConfig struct {
 	Logger            *zap.Logger
 	Address           string        `yaml:"address"`
 	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
-	TlsCertificate    *tls.Certificate
 }
 
 func (cfg *AccountServiceServerConfig) getGrpcServerOptions() []grpc.ServerOption {
@@ -28,11 +25,6 @@ func (cfg *AccountServiceServerConfig) getGrpcServerOptions() []grpc.ServerOptio
 
 	if cfg.ConnectionTimeout != 0 {
 		opts = append(opts, grpc.ConnectionTimeout(cfg.ConnectionTimeout))
-	}
-
-	if cfg.TlsCertificate != nil {
-		c := credentials.NewServerTLSFromCert(cfg.TlsCertificate)
-		opts = append(opts, grpc.Creds(c))
 	}
 
 	return opts
