@@ -65,7 +65,7 @@ func newApp(ctx context.Context, cfg *Config) *application {
 	a.initClients(ctx)
 	a.initGenerator()
 	a.initConnections(ctx)
-	a.initRepos()
+	a.initRepos(ctx)
 	a.initFacade()
 	a.initService()
 
@@ -97,10 +97,10 @@ func (a *application) initConnections(ctx context.Context) {
 	}
 }
 
-func (a *application) initRepos() {
+func (a *application) initRepos(ctx context.Context) {
 	a.repositories = repositories{
 		cache: cache.NewCache(a.connections.memcached),
-		repo:  repository.New(a.connections.database),
+		repo:  repository.New(ctx, a.connections.database),
 	}
 }
 
