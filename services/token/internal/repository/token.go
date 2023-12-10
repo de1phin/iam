@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/de1phin/iam/pkg/database"
+	"github.com/de1phin/iam/pkg/logger"
+	"go.uber.org/zap"
 )
 
 var ErrNotFound = errors.New("not found")
@@ -13,10 +15,33 @@ type Repository struct {
 	db database.Database
 }
 
-func New(db database.Database) *Repository {
+func New(ctx context.Context, db database.Database) *Repository {
+	if err := initSchema(ctx, db); err != nil {
+		logger.Error("init token database", zap.Error(err))
+	}
 	return &Repository{
 		db: db,
 	}
+}
+
+func initSchema(ctx context.Context, db database.Database) error {
+	query := `
+		CREATE TABLE token_info (
+			id SERIAL PRIMARY KEY,
+		
+			ssh TEXT NOT NULL,
+			token TEXT NOT NULL,
+		
+			created_at TIMESTAMP NOT NULL DEFAULT now(),
+			updated_at TIMESTAMP NOT NULL DEFAULT now(),
+			deleted_at TIMESTAMP
+		);
+		
+		CREATE UNIQUE INDEX token_info_token ON token_info(token);
+`
+
+	_, err := db.Exec(ctx, query)
+	return err
 }
 
 func (r *Repository) GetToken(ctx context.Context, ssh string) (string, error) {
