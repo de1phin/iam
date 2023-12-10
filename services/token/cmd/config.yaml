@@ -1,8 +1,8 @@
 service:
   token_address: 0.0.0.0:8444
   swagger_address: 0.0.0.0:8445
+  swagger_host: token.swagger.iam.de1phin.ru
   account_address: account-service:8443
-  swagger_host: 
   connection_timeout: 10s
   token_length: 64
   only_cache_mode: false
