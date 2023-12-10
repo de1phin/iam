@@ -1,4 +1,4 @@
-token_service_addr: token.iam.internal:8444
+token_service_addr: token-service:8444
 postgres_password_lockbox_secret_id: e6qav0q81e7am68ghadt
 postgres:
   host: rc1a-4s9kodv0e4g841m3.mdb.yandexcloud.net
