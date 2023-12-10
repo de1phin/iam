@@ -25,31 +25,9 @@ module "iam" {
 
     dns_endpoints = [
         {
-            "ip": "10.96.203.91"
-            "hostname": "account"
-            "public": false
-        },
-        {
-            "ip": "158.160.133.43"
-            "hostname": "account"
-            "public": true
-        },
-
-        {
-            "ip": "10.96.151.216"
-            "hostname": "token"
-            "public": false
-        },
-        {
-            "ip": "158.160.131.19"
+            "ip": ""
             "hostname": "token"
             "public": true
-        },
-
-        {
-            "ip": "10.96.168.208"
-            "hostname": "access"
-            "public": false
         }
     ]
 }

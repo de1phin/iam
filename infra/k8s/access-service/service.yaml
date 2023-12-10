@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: access-service
 spec:
+  type: NodePort
   selector:
     app: access-service
   ports:
     - name: grpc
       port: 8443
       targetPort: 8443
+      nodePort: 30100
