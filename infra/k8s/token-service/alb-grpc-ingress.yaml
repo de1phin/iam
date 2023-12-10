@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: token-service-alb-ingress
+  annotations:
+    ingress.alb.yc.io/subnets: "e9b330894dfkgrir4qps,e2lin7tepnv1hvn70maj,fl8m515f6gqqk4fbn07m"
+    ingress.alb.yc.io/external-ipv4-address: auto
+    ingress.alb.yc.io/group-name: iam-k8s-grpc-ingress
+    ingress.alb.yc.io/protocol: grpc
+spec:
+  rules:
+    - host: token.iam.de1phin.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: token-service
+                port:
+                  name: grpc
+

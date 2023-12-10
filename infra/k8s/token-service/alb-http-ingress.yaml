@@ -1,13 +1,14 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: token-service-alb-ingress
+  name: token-service-http-alb-ingress
   annotations:
     ingress.alb.yc.io/subnets: "e9b330894dfkgrir4qps,e2lin7tepnv1hvn70maj,fl8m515f6gqqk4fbn07m"
     ingress.alb.yc.io/external-ipv4-address: auto
+    ingress.alb.yc.io/group-name: iam-k8s-http-ingress
 spec:
   rules:
-    - host: token.iam.de1phin.ru
+    - host: token.swagger.iam.de1phin.ru
       http:
         paths:
           - path: /
@@ -16,4 +17,4 @@ spec:
               service:
                 name: token-service
                 port:
-                  name: grpc
+                  name: swagger

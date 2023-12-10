@@ -25,8 +25,23 @@ module "iam" {
 
     dns_endpoints = [
         {
-            "ip": ""
+            "ip": "158.160.136.141"
             "hostname": "token"
+            "public": true
+        },
+        {
+            "ip": "158.160.136.141"
+            "hostname": "access"
+            "public": true
+        },
+        {
+            "ip": "158.160.136.141"
+            "hostname": "account"
+            "public": true
+        },
+        {
+            "ip": "158.160.136.141"
+            "hostname": "token.swagger"
             "public": true
         }
     ]

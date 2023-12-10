@@ -11,3 +11,7 @@ spec:
       port: 8444
       targetPort: 8444
       nodePort: 30102
+    - name: swagger
+      port: 8445
+      targetPort: 8445
+      nodePort: 30103
