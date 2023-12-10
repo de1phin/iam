@@ -32,7 +32,7 @@ type metadataTokenResponse struct {
 }
 
 func (*computeMetadata) GetToken() (string, error) {
-	url := "169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
+	url := "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", err

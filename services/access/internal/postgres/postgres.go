@@ -9,11 +9,11 @@ import (
 )
 
 type Options struct {
-	Host     string
-	Port     string
-	User     string
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	User     string `yaml:"user"`
 	Password string
-	DBName   string
+	DBName   string `yaml:"dbname"`
 }
 
 type Storage struct {

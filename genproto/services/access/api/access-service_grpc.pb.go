@@ -4,7 +4,7 @@
 // - protoc             v4.25.1
 // source: access/api/access-service.proto
 
-package token
+package access
 
 import (
 	context "context"
@@ -19,12 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AccessService_AddRole_FullMethodName             = "/iam.services.auth.AccessService/AddRole"
-	AccessService_GetRole_FullMethodName             = "/iam.services.auth.AccessService/GetRole"
-	AccessService_DeleteRole_FullMethodName          = "/iam.services.auth.AccessService/DeleteRole"
-	AccessService_AddAccessBinding_FullMethodName    = "/iam.services.auth.AccessService/AddAccessBinding"
-	AccessService_CheckPermission_FullMethodName     = "/iam.services.auth.AccessService/CheckPermission"
-	AccessService_DeleteAccessBinding_FullMethodName = "/iam.services.auth.AccessService/DeleteAccessBinding"
+	AccessService_AddRole_FullMethodName             = "/iam.services.access.AccessService/AddRole"
+	AccessService_GetRole_FullMethodName             = "/iam.services.access.AccessService/GetRole"
+	AccessService_DeleteRole_FullMethodName          = "/iam.services.access.AccessService/DeleteRole"
+	AccessService_AddAccessBinding_FullMethodName    = "/iam.services.access.AccessService/AddAccessBinding"
+	AccessService_CheckPermission_FullMethodName     = "/iam.services.access.AccessService/CheckPermission"
+	AccessService_DeleteAccessBinding_FullMethodName = "/iam.services.access.AccessService/DeleteAccessBinding"
 )
 
 // AccessServiceClient is the client API for AccessService service.
@@ -261,7 +261,7 @@ func _AccessService_DeleteAccessBinding_Handler(srv interface{}, ctx context.Con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AccessService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "iam.services.auth.AccessService",
+	ServiceName: "iam.services.access.AccessService",
 	HandlerType: (*AccessServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

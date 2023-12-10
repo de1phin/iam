@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: access-service
+spec:
+  selector:
+    matchLabels:
+      app: access-service
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: access-service
+    spec:
+      containers:
+      - image: "cr.yandex/crp7b3092gvddqsd8k3u/access-service:latest"
+        imagePullPolicy: Always
+        name: access-service
+        resources:
+          requests:
+            cpu: "400m"
+            memory: "512Mi"
+          limits:
+            cpu: "400m"
+            memory: "512Mi"
+        ports:
+        - protocol: TCP
+          containerPort: 8443
+          name: http
+      restartPolicy: Always
