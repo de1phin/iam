@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -11,9 +12,15 @@ import (
 	"time"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
+	yc "github.com/de1phin/iam/iamssh/pkg/yccli"
 	memcache "github.com/de1phin/iam/pkg/cache"
 	"github.com/de1phin/iam/pkg/database"
 	"github.com/de1phin/iam/pkg/logger"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"gopkg.in/yaml.v2"
+
 	token_service "github.com/de1phin/iam/services/token/app/token"
 	"github.com/de1phin/iam/services/token/internal/cache"
 	"github.com/de1phin/iam/services/token/internal/client"
@@ -21,10 +28,6 @@ import (
 	"github.com/de1phin/iam/services/token/internal/generator"
 	"github.com/de1phin/iam/services/token/internal/repository"
 	"github.com/de1phin/iam/services/token/internal/server"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"gopkg.in/yaml.v2"
 )
 
 type connections struct {
@@ -87,7 +90,7 @@ func (a *application) initConnections(ctx context.Context) {
 
 	if !a.cfg.Service.OnlyCacheMode {
 		var err error
-		a.connections.database, err = database.NewDatabase(ctx, a.cfg.Service.Dsn)
+		a.connections.database, err = database.NewDatabase(ctx, a.cfg.Postgres.Dsn)
 		if err != nil {
 			logger.Error("init connect to database", zap.Error(err))
 		}
@@ -160,19 +163,46 @@ func readConfig(configPath string) *Config {
 	if err != nil {
 		log.Fatal("failed to unmarshal config - ", err)
 	}
+
+	passwordSecret, err := yc.NewLockboxClient().WithTokenGetter(yc.ComputeMetadata()).GetSecret(cfg.PostgresPasswordLockboxSecretID)
+	if err != nil {
+		logger.Fatal("Failed to get secret from lockbox", zap.Error(err))
+	}
+
+	password := passwordSecret.Entries[0].TextValue
+	cfg.Postgres.Password = password
+
+	cfg.Postgres.Dsn = fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Postgres.Host,
+		cfg.Postgres.Port,
+		cfg.Postgres.User,
+		cfg.Postgres.Password,
+		cfg.Postgres.DBName,
+	)
+
 	return &cfg
 }
 
 type Config struct {
-	Service TokenService `yaml:"service"`
+	Service                         TokenService `yaml:"service"`
+	Postgres                        Postgres     `yaml:"postgres"`
+	PostgresPasswordLockboxSecretID string       `yaml:"postgres_password_lockbox_secret_id"`
 }
 
 type TokenService struct {
 	SwaggerAddress    string        `yaml:"swagger_address"`
-	GrpcAddress       string        `yaml:"grpc_address"`
+	GrpcAddress       string        `yaml:"token_address"`
 	AccountAddress    string        `yaml:"account_address"`
 	ConnectionTimeout time.Duration `yaml:"connection_timeout"`
-	Dsn               string        `yaml:"token_dsn"`
 	OnlyCacheMode     bool          `yaml:"only_cache_mode"`
 	TokenLength       int           `yaml:"token_length"`
+}
+
+type Postgres struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	User     string `yaml:"user"`
+	DBName   string `yaml:"dbname"`
+	Password string
+	Dsn      string
 }
