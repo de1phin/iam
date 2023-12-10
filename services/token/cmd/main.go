@@ -114,7 +114,7 @@ func (a *application) initService() {
 
 func (a *application) Run(ctx context.Context) error {
 	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.GrpcAddress)
-	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.SwaggerAddress, a.cfg.Service.GrpcAddress)
+	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.SwaggerAddress, a.cfg.Service.SwaggerHost, a.cfg.Service.GrpcAddress)
 
 	return nil
 }
@@ -191,6 +191,7 @@ type Config struct {
 
 type TokenService struct {
 	SwaggerAddress    string        `yaml:"swagger_address"`
+	SwaggerHost       string        `yaml:"swagger_host"`
 	GrpcAddress       string        `yaml:"token_address"`
 	AccountAddress    string        `yaml:"account_address"`
 	ConnectionTimeout time.Duration `yaml:"connection_timeout"`

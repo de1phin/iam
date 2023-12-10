@@ -39,8 +39,9 @@ module "iam" {
             "hostname": "account"
             "public": true
         },
+
         {
-            "ip": "158.160.136.141"
+            "ip": "158.160.132.223"
             "hostname": "token.swagger"
             "public": true
         }
