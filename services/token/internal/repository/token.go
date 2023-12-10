@@ -26,7 +26,7 @@ func New(ctx context.Context, db database.Database) *Repository {
 
 func initSchema(ctx context.Context, db database.Database) error {
 	query := `
-		CREATE TABLE token_info (
+		CREATE TABLE IF NOT EXISTS token_info (
 			id SERIAL PRIMARY KEY,
 		
 			ssh TEXT NOT NULL,
@@ -37,7 +37,7 @@ func initSchema(ctx context.Context, db database.Database) error {
 			deleted_at TIMESTAMP
 		);
 		
-		CREATE UNIQUE INDEX token_info_token ON token_info(token);
+		CREATE UNIQUE INDEX IF NOT EXISTS token_info_token ON token_info(token);
 `
 
 	_, err := db.Exec(ctx, query)
