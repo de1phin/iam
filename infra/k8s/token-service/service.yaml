@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: token-service
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: token-service
   ports:
-    - port: 8444
+    - name: grpc
+      port: 8444
       targetPort: 8444
+      nodePort: 30102

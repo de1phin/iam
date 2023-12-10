@@ -3,9 +3,11 @@ kind: Service
 metadata:
   name: account-service
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: account-service
   ports:
-    - port: 8443
+    - name: grpc
+      port: 8443
       targetPort: 8443
+      nodePort: 30101
