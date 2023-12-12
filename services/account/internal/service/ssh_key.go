@@ -9,15 +9,10 @@ import (
 	"github.com/de1phin/iam/pkg/sshutil"
 	"github.com/de1phin/iam/services/account/internal/database"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
-
-func GetFingerprint(pubKey ssh.PublicKey) string {
-	return ssh.FingerprintSHA256(pubKey)
-}
 
 func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshKeyRequest) (*account.CreateSshKeyResponse, error) {
 	logger := s.logger.Named("CreateSshKey").With(zap.String("account_id", req.GetAccountId()))
@@ -31,13 +26,13 @@ func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshK
 		return nil, ErrorInternal()
 	}
 
-	pubKey, err := sshutil.ParsePublicKey(req.GetPublicKey())
+	pubKey, err := sshutil.ParsePublicKey([]byte(req.GetPublicKey()))
 	if err != nil {
 		logger.Debug("Ssh Public Key parsing failed", zap.Error(err))
 		return nil, status.Error(codes.InvalidArgument, "Failed to parse ssh public key")
 	}
 
-	fingerprint := GetFingerprint(pubKey)
+	fingerprint := sshutil.GetFingerprint(pubKey)
 	logger = logger.With(zap.String("fingerprint", fingerprint))
 
 	// check if ssh key is already used
@@ -53,7 +48,7 @@ func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshK
 	key := &account.SshKey{
 		Fingerprint: fingerprint,
 		AccountId:   req.GetAccountId(),
-		PublicKey:   pubKey.Marshal(),
+		PublicKey:   string(pubKey.Marshal()),
 		CreatedAt:   timestamppb.Now(),
 	}
 	err = s.sshKeys.Create(key)

@@ -207,12 +207,12 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 func (s *AccountService) GetAccountBySshKey(_ context.Context, req *account.GetAccountBySshKeyRequest) (*account.GetAccountBySshKeyResponse, error) {
 	logger := s.logger.Named("GetAccountBySshKey")
 
-	sshPubKey, err := sshutil.ParsePublicKey(req.GetSshPubKey())
+	sshPubKey, err := sshutil.ParsePublicKey([]byte(req.GetSshPubKey()))
 	if err != nil {
-		logger.Debug("Ssh Public key parsing failed", zap.ByteString("public key", req.GetSshPubKey()))
+		logger.Debug("Ssh Public key parsing failed", zap.String("public key", req.GetSshPubKey()))
 		return nil, status.Error(codes.InvalidArgument, "Invalid ssh public key")
 	}
-	fingerprint := GetFingerprint(sshPubKey)
+	fingerprint := sshutil.GetFingerprint(sshPubKey)
 	key, err := s.sshKeys.Get(fingerprint)
 	if err != nil {
 		if errors.Is(err, database.ErrNotExist{}) {

@@ -20,7 +20,7 @@ type TokenFacade interface {
 }
 
 type AccountService interface {
-	GetAccountBySshKey(ctx context.Context, sshPubKey []byte) (string, error)
+	GetAccountBySshKey(ctx context.Context, sshPubKey string) (string, error)
 }
 
 type Implementation struct {
@@ -116,7 +116,7 @@ func (i *Implementation) CheckToken(ctx context.Context, req *desc.CheckTokenReq
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
-	accountID, err := i.account.GetAccountBySshKey(ctx, []byte(ssh))
+	accountID, err := i.account.GetAccountBySshKey(ctx, ssh)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

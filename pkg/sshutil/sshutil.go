@@ -10,6 +10,10 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+func GetFingerprint(pubKey ssh.PublicKey) string {
+	return ssh.FingerprintSHA256(pubKey)
+}
+
 func EncryptWithPublicKey(data []byte, key []byte) ([]byte, error) {
 	parsed, _, _, _, err := ssh.ParseAuthorizedKey(key)
 	if err != nil {
