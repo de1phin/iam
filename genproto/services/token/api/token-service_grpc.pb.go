@@ -19,20 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TokenService_GenerateToken_FullMethodName = "/iam.services.token.TokenService/GenerateToken"
+	TokenService_CreateToken_FullMethodName   = "/iam.services.token.TokenService/CreateToken"
 	TokenService_RefreshToken_FullMethodName  = "/iam.services.token.TokenService/RefreshToken"
 	TokenService_DeleteToken_FullMethodName   = "/iam.services.token.TokenService/DeleteToken"
-	TokenService_CheckToken_FullMethodName    = "/iam.services.token.TokenService/CheckToken"
+	TokenService_ExchangeToken_FullMethodName = "/iam.services.token.TokenService/ExchangeToken"
 )
 
 // TokenServiceClient is the client API for TokenService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TokenServiceClient interface {
-	GenerateToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error)
+	CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
-	DeleteToken(ctx context.Context, in *RemoveTokenRequest, opts ...grpc.CallOption) (*RemoveTokenResponse, error)
-	CheckToken(ctx context.Context, in *CheckTokenRequest, opts ...grpc.CallOption) (*CheckTokenResponse, error)
+	DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*DeleteTokenResponse, error)
+	ExchangeToken(ctx context.Context, in *ExchangeTokenRequest, opts ...grpc.CallOption) (*ExchangeTokenResponse, error)
 }
 
 type tokenServiceClient struct {
@@ -43,9 +43,9 @@ func NewTokenServiceClient(cc grpc.ClientConnInterface) TokenServiceClient {
 	return &tokenServiceClient{cc}
 }
 
-func (c *tokenServiceClient) GenerateToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error) {
-	out := new(GenerateTokenResponse)
-	err := c.cc.Invoke(ctx, TokenService_GenerateToken_FullMethodName, in, out, opts...)
+func (c *tokenServiceClient) CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error) {
+	out := new(CreateTokenResponse)
+	err := c.cc.Invoke(ctx, TokenService_CreateToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -61,8 +61,8 @@ func (c *tokenServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenR
 	return out, nil
 }
 
-func (c *tokenServiceClient) DeleteToken(ctx context.Context, in *RemoveTokenRequest, opts ...grpc.CallOption) (*RemoveTokenResponse, error) {
-	out := new(RemoveTokenResponse)
+func (c *tokenServiceClient) DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*DeleteTokenResponse, error) {
+	out := new(DeleteTokenResponse)
 	err := c.cc.Invoke(ctx, TokenService_DeleteToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -70,9 +70,9 @@ func (c *tokenServiceClient) DeleteToken(ctx context.Context, in *RemoveTokenReq
 	return out, nil
 }
 
-func (c *tokenServiceClient) CheckToken(ctx context.Context, in *CheckTokenRequest, opts ...grpc.CallOption) (*CheckTokenResponse, error) {
-	out := new(CheckTokenResponse)
-	err := c.cc.Invoke(ctx, TokenService_CheckToken_FullMethodName, in, out, opts...)
+func (c *tokenServiceClient) ExchangeToken(ctx context.Context, in *ExchangeTokenRequest, opts ...grpc.CallOption) (*ExchangeTokenResponse, error) {
+	out := new(ExchangeTokenResponse)
+	err := c.cc.Invoke(ctx, TokenService_ExchangeToken_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +83,10 @@ func (c *tokenServiceClient) CheckToken(ctx context.Context, in *CheckTokenReque
 // All implementations must embed UnimplementedTokenServiceServer
 // for forward compatibility
 type TokenServiceServer interface {
-	GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error)
+	CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
-	DeleteToken(context.Context, *RemoveTokenRequest) (*RemoveTokenResponse, error)
-	CheckToken(context.Context, *CheckTokenRequest) (*CheckTokenResponse, error)
+	DeleteToken(context.Context, *DeleteTokenRequest) (*DeleteTokenResponse, error)
+	ExchangeToken(context.Context, *ExchangeTokenRequest) (*ExchangeTokenResponse, error)
 	mustEmbedUnimplementedTokenServiceServer()
 }
 
@@ -94,17 +94,17 @@ type TokenServiceServer interface {
 type UnimplementedTokenServiceServer struct {
 }
 
-func (UnimplementedTokenServiceServer) GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GenerateToken not implemented")
+func (UnimplementedTokenServiceServer) CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateToken not implemented")
 }
 func (UnimplementedTokenServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
 }
-func (UnimplementedTokenServiceServer) DeleteToken(context.Context, *RemoveTokenRequest) (*RemoveTokenResponse, error) {
+func (UnimplementedTokenServiceServer) DeleteToken(context.Context, *DeleteTokenRequest) (*DeleteTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteToken not implemented")
 }
-func (UnimplementedTokenServiceServer) CheckToken(context.Context, *CheckTokenRequest) (*CheckTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckToken not implemented")
+func (UnimplementedTokenServiceServer) ExchangeToken(context.Context, *ExchangeTokenRequest) (*ExchangeTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeToken not implemented")
 }
 func (UnimplementedTokenServiceServer) mustEmbedUnimplementedTokenServiceServer() {}
 
@@ -119,20 +119,20 @@ func RegisterTokenServiceServer(s grpc.ServiceRegistrar, srv TokenServiceServer)
 	s.RegisterService(&TokenService_ServiceDesc, srv)
 }
 
-func _TokenService_GenerateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateTokenRequest)
+func _TokenService_CreateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TokenServiceServer).GenerateToken(ctx, in)
+		return srv.(TokenServiceServer).CreateToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TokenService_GenerateToken_FullMethodName,
+		FullMethod: TokenService_CreateToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TokenServiceServer).GenerateToken(ctx, req.(*GenerateTokenRequest))
+		return srv.(TokenServiceServer).CreateToken(ctx, req.(*CreateTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -156,7 +156,7 @@ func _TokenService_RefreshToken_Handler(srv interface{}, ctx context.Context, de
 }
 
 func _TokenService_DeleteToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemoveTokenRequest)
+	in := new(DeleteTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -168,25 +168,25 @@ func _TokenService_DeleteToken_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: TokenService_DeleteToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TokenServiceServer).DeleteToken(ctx, req.(*RemoveTokenRequest))
+		return srv.(TokenServiceServer).DeleteToken(ctx, req.(*DeleteTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _TokenService_CheckToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CheckTokenRequest)
+func _TokenService_ExchangeToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExchangeTokenRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TokenServiceServer).CheckToken(ctx, in)
+		return srv.(TokenServiceServer).ExchangeToken(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: TokenService_CheckToken_FullMethodName,
+		FullMethod: TokenService_ExchangeToken_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TokenServiceServer).CheckToken(ctx, req.(*CheckTokenRequest))
+		return srv.(TokenServiceServer).ExchangeToken(ctx, req.(*ExchangeTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -199,8 +199,8 @@ var TokenService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TokenServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GenerateToken",
-			Handler:    _TokenService_GenerateToken_Handler,
+			MethodName: "CreateToken",
+			Handler:    _TokenService_CreateToken_Handler,
 		},
 		{
 			MethodName: "RefreshToken",
@@ -211,8 +211,8 @@ var TokenService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _TokenService_DeleteToken_Handler,
 		},
 		{
-			MethodName: "CheckToken",
-			Handler:    _TokenService_CheckToken_Handler,
+			MethodName: "ExchangeToken",
+			Handler:    _TokenService_ExchangeToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

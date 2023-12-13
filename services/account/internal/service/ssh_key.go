@@ -23,7 +23,7 @@ func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshK
 	}
 	if err != nil {
 		logger.Error("Internal Error on AccountDatabase.Get", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	pubKey, err := sshutil.ParsePublicKey([]byte(req.GetPublicKey()))
@@ -42,13 +42,13 @@ func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshK
 	}
 	if err != nil && !errors.Is(err, database.ErrNotExist{}) {
 		logger.Error("Internal Error on SshKeyDatabase.Get", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	key := &account.SshKey{
 		Fingerprint: fingerprint,
 		AccountId:   req.GetAccountId(),
-		PublicKey:   string(pubKey.Marshal()),
+		PublicKey:   string(req.GetPublicKey()),
 		CreatedAt:   timestamppb.Now(),
 	}
 	err = s.sshKeys.Create(key)
@@ -57,7 +57,7 @@ func (s *AccountService) CreateSshKey(_ context.Context, req *account.CreateSshK
 	}
 	if err != nil {
 		logger.Error("Internal Error on SshKeyDatabase.Create", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	return &account.CreateSshKeyResponse{
@@ -76,7 +76,7 @@ func (s *AccountService) ListSshKeys(_ context.Context, req *account.ListSshKeys
 	// not exist is a valid response with 0 ssh keys
 	if err != nil && !errors.Is(err, database.ErrNotExist{}) {
 		logger.Error("Internal Error on SshKeyDatabase.List", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	return &account.ListSshKeysResponse{
@@ -95,7 +95,7 @@ func (s *AccountService) DeleteSshKey(_ context.Context, req *account.DeleteSshK
 	}
 	if err != nil {
 		logger.Error("Internal Error on SshKeyDatabase.Delete", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	return &account.DeleteSshKeyResponse{}, nil

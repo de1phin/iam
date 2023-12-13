@@ -69,7 +69,7 @@ func validateAccountFields(acc *account.Account) error {
 	return nil
 }
 
-func (s *AccountService) validateNewAccount(acc *account.Account) error {
+func (s *AccountService) validateNewAccount(ctx context.Context, acc *account.Account) error {
 	for _, char := range acc.GetId() {
 		if !bytes.ContainsRune([]byte(IdCharset), char) &&
 			!bytes.ContainsRune([]byte(WellKnownIdCharset), char) {
@@ -82,7 +82,8 @@ func (s *AccountService) validateNewAccount(acc *account.Account) error {
 		return status.Error(codes.AlreadyExists, "account with specified id already exists")
 	}
 	if err != nil && !errors.Is(err, database.ErrNotExist{}) {
-		return ErrorInternal()
+		ctxlog.Logger(ctx).With(zap.String("account_id", acc.GetId())).Error("Internal error on AccountDatabase.Get", zap.Error(err))
+		return ErrorInternal(err)
 	}
 
 	return validateAccountFields(acc)
@@ -97,7 +98,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 		id, err = s.generateNewUniqueId(ctxlog.ContextWithLogger(ctx, logger))
 		if err != nil {
 			logger.Error("generateNewUniqueId failed", zap.Error(err))
-			return nil, ErrorInternal()
+			return nil, ErrorInternal(err)
 		}
 	}
 	logger = logger.With(zap.String("account_id", id))
@@ -109,7 +110,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 		CreatedAt:   timestamppb.Now(),
 	}
 
-	err = s.validateNewAccount(acc)
+	err = s.validateNewAccount(ctxlog.ContextWithLogger(ctx, logger), acc)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (s *AccountService) CreateAccount(ctx context.Context, req *account.CreateA
 	err = s.accounts.Create(acc)
 	if err != nil {
 		logger.Error("Internal Error on AccountDatabase.Create", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 	return &account.CreateAccountResponse{
 		Account: acc,
@@ -139,7 +140,7 @@ func (s *AccountService) GetAccount(_ context.Context, req *account.GetAccountRe
 	}
 
 	logger.Error("Internal Error on AccountDatabase.Get", zap.Error(err))
-	return nil, ErrorInternal()
+	return nil, ErrorInternal(err)
 }
 
 func (s *AccountService) DeleteAccount(_ context.Context, req *account.DeleteAccountRequest) (*account.DeleteAccountResponse, error) {
@@ -155,7 +156,7 @@ func (s *AccountService) DeleteAccount(_ context.Context, req *account.DeleteAcc
 	}
 
 	logger.Error("Internal Error on AccountDatabase.Delete", zap.Error(err))
-	return nil, ErrorInternal()
+	return nil, ErrorInternal(err)
 }
 
 func updateAccountFields(acc *account.Account, req *account.UpdateAccountRequest) error {
@@ -180,7 +181,7 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 	}
 	if err != nil {
 		logger.Error("Internal Error on AccountDatabase.Get", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	err = updateAccountFields(acc, req)
@@ -196,7 +197,7 @@ func (s *AccountService) UpdateAccount(_ context.Context, req *account.UpdateAcc
 	err = s.accounts.Update(acc)
 	if err != nil {
 		logger.Error("Internal Error on AccountDatabase.Update", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	return &account.UpdateAccountResponse{
@@ -220,7 +221,7 @@ func (s *AccountService) GetAccountBySshKey(_ context.Context, req *account.GetA
 		}
 
 		logger.With(zap.String("fingerprint", fingerprint)).Error("sshKeys.Get Internal Error", zap.Error(err))
-		return nil, ErrorInternal()
+		return nil, ErrorInternal(err)
 	}
 
 	return &account.GetAccountBySshKeyResponse{

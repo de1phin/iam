@@ -61,7 +61,7 @@ func (r *SqlSshKeyDatabase) List(accountId string) ([]*account.SshKey, error) {
 		WHERE account_id = $1
 	`
 
-	_, err := r.db.Exec(context.Background(), query, res)
+	err := r.db.GetSlice(context.Background(), &res, query, accountId)
 	if err != nil {
 		return nil, convertError(err)
 	}

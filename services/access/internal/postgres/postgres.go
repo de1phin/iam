@@ -20,6 +20,12 @@ type Storage struct {
 	conn *sql.DB
 }
 
+type ErrNotExist struct{}
+
+func (ErrNotExist) Error() string {
+	return "Not Exist"
+}
+
 func New(ctx context.Context, options Options) (*Storage, error) {
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		options.Host,

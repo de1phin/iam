@@ -8,9 +8,11 @@ import (
 	"os"
 	"os/user"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/term"
 )
 
 var sshCmd = &cobra.Command{
@@ -185,9 +187,9 @@ func createLocalClient() (*ssh.Client, error) {
 	if sshErr, ok := err.(*ssh.PassphraseMissingError); ok && sshErr != nil {
 		fmt.Println("Private Key is passphrase protected.")
 		fmt.Print("passphrase: ")
-		passphrase := ""
-		fmt.Scanln(&passphrase)
-		signer, err = ssh.ParsePrivateKeyWithPassphrase(keyRaw, []byte(passphrase))
+		passphrase, _ := term.ReadPassword(int(syscall.Stdin))
+		fmt.Println()
+		signer, err = ssh.ParsePrivateKeyWithPassphrase(keyRaw, passphrase)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse %s: %w", IamBastionSshKeyFile, err)

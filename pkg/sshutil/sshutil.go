@@ -6,8 +6,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"syscall"
 
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/term"
 )
 
 func GetFingerprint(pubKey ssh.PublicKey) string {
@@ -51,6 +53,13 @@ func DecryptWithPrivateKey(data []byte, key []byte) ([]byte, error) {
 	}
 
 	sshPrivateKey, err := ssh.ParseRawPrivateKey(key)
+	if sshErr, ok := err.(*ssh.PassphraseMissingError); ok && sshErr != nil {
+		fmt.Println("Private Key is passphrase protected.")
+		fmt.Print("Passphrase: ")
+		passphrase, _ := term.ReadPassword(int(syscall.Stdin))
+		fmt.Println()
+		sshPrivateKey, err = ssh.ParseRawPrivateKeyWithPassphrase(key, passphrase)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}

@@ -5,7 +5,9 @@ import (
 
 	tokenapi "github.com/de1phin/iam/genproto/services/token/api"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 type TokenServiceClient struct {
@@ -31,13 +33,16 @@ func NewTokenServiceClient(
 }
 
 func (c *TokenServiceClient) ValidateToken(ctx context.Context, token string) (accountID string, isValid bool, err error) {
-	request := &tokenapi.CheckTokenRequest{Token: &tokenapi.Token{Token: token}}
-	response, err := c.api.CheckToken(ctx, request)
+	request := &tokenapi.ExchangeTokenRequest{Token: token}
+	response, err := c.api.ExchangeToken(ctx, request)
+
+	status := status.Convert(err)
+	if status != nil && status.Code() == codes.NotFound {
+		return "", false, nil
+	}
+
 	if err != nil {
 		return "", false, err
-	}
-	if response.Status == tokenapi.TokenStatus_UNDEFINED {
-		return "", false, nil
 	}
 	return response.GetAccountId(), true, nil
 }

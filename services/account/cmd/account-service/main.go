@@ -98,9 +98,7 @@ func main() {
 		service.SshKeyDatabase(sshKeyDb),
 	)
 
-	zapCfg := zap.NewProductionConfig()
-	zapCfg.OutputPaths = []string{"stdout"}
-	logger := zap.Must(zapCfg.Build()).Named("AccountService")
+	logger := zap.Must(zap.NewProduction()).Named("AccountService")
 
 	serverConfig := config.Server
 	serverConfig.AccountService = service

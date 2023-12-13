@@ -2,21 +2,28 @@ package token
 
 import (
 	"context"
+	"errors"
+	"math/rand"
+	"time"
 
 	desc "github.com/de1phin/iam/genproto/services/token/api"
+	"github.com/de1phin/iam/pkg/logger"
 	"github.com/de1phin/iam/pkg/sshutil"
-	"github.com/de1phin/iam/services/token/internal/mapping"
 	"github.com/de1phin/iam/services/token/internal/model"
+	"github.com/de1phin/iam/services/token/internal/repository"
 	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type TokenFacade interface {
-	GenerateToken(ctx context.Context, ssh string) (*model.Token, error)
-	RefreshToken(ctx context.Context, ssh string) error
-	DeleteToken(ctx context.Context, ssh string) error
-	GetSshByToken(ctx context.Context, tk model.Token) (string, error)
+	CreateToken(ctx context.Context, accountId string) (*model.Token, error)
+	RefreshToken(ctx context.Context, token string) (*model.Token, error)
+	DeleteToken(ctx context.Context, token string) error
+	ExpireTokens(ctx context.Context) error
+	GetToken(ctx context.Context, token string) (*model.Token, error)
 }
 
 type AccountService interface {
@@ -26,6 +33,8 @@ type AccountService interface {
 type Implementation struct {
 	token   TokenFacade
 	account AccountService
+
+	quitExpire chan struct{}
 
 	desc.UnimplementedTokenServiceServer
 }
@@ -37,15 +46,50 @@ func NewService(token TokenFacade, account AccountService) *Implementation {
 	}
 }
 
-func (i *Implementation) GenerateToken(ctx context.Context, req *desc.GenerateTokenRequest) (*desc.GenerateTokenResponse, error) {
+func (i *Implementation) RunExpirationRoutine(ctx context.Context, intervalMin time.Duration, intervalMax time.Duration) {
+	i.quitExpire = make(chan struct{})
+
+	for {
+		diff := int64(intervalMax) - int64(intervalMin)
+		interval := time.Duration(int64(intervalMin) + rand.Int63n(diff))
+
+		timer := time.NewTimer(interval)
+
+		select {
+		case <-i.quitExpire:
+			timer.Stop()
+			break
+		case <-timer.C:
+			err := i.token.ExpireTokens(ctx)
+			if err != nil {
+				logger.Error("ExpireTokens", zap.Error(err))
+			}
+			break
+		}
+	}
+}
+
+func (i *Implementation) StopExpirationRoutine() {
+	if i.quitExpire != nil {
+		i.quitExpire <- struct{}{}
+		i.quitExpire = nil
+	}
+}
+
+func (i *Implementation) CreateToken(ctx context.Context, req *desc.CreateTokenRequest) (*desc.CreateTokenResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "api/GenerateToken")
 	defer span.Finish()
 
-	if len(req.GetSshPubKey()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty ssh")
+	accountId, err := i.account.GetAccountBySshKey(ctx, req.GetSshPubKey())
+	reqStatus := status.Convert(err)
+	if reqStatus != nil && reqStatus.Code() == codes.InvalidArgument {
+		return nil, err
+	}
+	if reqStatus != nil && reqStatus.Code() == codes.NotFound {
+		return nil, status.Error(codes.Unauthenticated, "Unable to authenticate account")
 	}
 
-	token, err := i.token.GenerateToken(ctx, string(req.GetSshPubKey()))
+	token, err := i.token.CreateToken(ctx, accountId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -55,11 +99,9 @@ func (i *Implementation) GenerateToken(ctx context.Context, req *desc.GenerateTo
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &desc.GenerateTokenResponse{
-		Token: &desc.Token{
-			Token:  string(encryptedToken),
-			Status: desc.TokenStatus_VALID,
-		},
+	return &desc.CreateTokenResponse{
+		Token:     string(encryptedToken),
+		ExpiresAt: timestamppb.New(token.ExpiresAt),
 	}, nil
 }
 
@@ -67,61 +109,47 @@ func (i *Implementation) RefreshToken(ctx context.Context, req *desc.RefreshToke
 	span, ctx := opentracing.StartSpanFromContext(ctx, "api/RefreshToken")
 	defer span.Finish()
 
-	if len(req.GetToken()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty token")
+	token, err := i.token.RefreshToken(ctx, req.GetToken())
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, status.Error(codes.NotFound, "Token not found")
 	}
-
-	if err := i.token.RefreshToken(ctx, string(req.GetToken())); err != nil {
-		return nil, status.Error(codes.NotFound, err.Error())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &desc.RefreshTokenResponse{
-		Token: &desc.Token{
-			Token:  string(req.GetToken()),
-			Status: desc.TokenStatus_VALID,
-		},
+		ExpiresAt: timestamppb.New(token.ExpiresAt),
 	}, nil
 }
 
-func (i *Implementation) DeleteToken(ctx context.Context, req *desc.RemoveTokenRequest) (*desc.RemoveTokenResponse, error) {
+func (i *Implementation) DeleteToken(ctx context.Context, req *desc.DeleteTokenRequest) (*desc.DeleteTokenResponse, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "api/DeleteToken")
 	defer span.Finish()
 
-	if len(req.GetSshKey()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty ssh")
+	err := i.token.DeleteToken(ctx, req.GetToken())
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, status.Error(codes.NotFound, "Token not found")
 	}
-
-	if err := i.token.DeleteToken(ctx, string(req.GetSshKey())); err != nil {
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &desc.RemoveTokenResponse{}, nil
+	return &desc.DeleteTokenResponse{}, nil
 }
 
-func (i *Implementation) CheckToken(ctx context.Context, req *desc.CheckTokenRequest) (*desc.CheckTokenResponse, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "api/CheckToken")
+func (i *Implementation) ExchangeToken(ctx context.Context, req *desc.ExchangeTokenRequest) (*desc.ExchangeTokenResponse, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "api/ExchangeToken")
 	defer span.Finish()
 
-	if req.GetToken() == nil || req.GetToken().Token == "" {
-		return nil, status.Error(codes.InvalidArgument, "empty token")
+	token, err := i.token.GetToken(ctx, req.GetToken())
+	if errors.Is(err, repository.ErrNotFound) {
+		return nil, status.Error(codes.NotFound, "Token not found")
 	}
-
-	token := mapping.MapTokenToInternal(req.GetToken())
-
-	ssh, err := i.token.GetSshByToken(ctx, token)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if ssh == "" {
-		return nil, status.Error(codes.NotFound, err.Error())
-	}
-
-	accountID, err := i.account.GetAccountBySshKey(ctx, ssh)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &desc.CheckTokenResponse{
-		AccountId: accountID,
+	return &desc.ExchangeTokenResponse{
+		AccountId: token.AccountId,
 	}, nil
 }

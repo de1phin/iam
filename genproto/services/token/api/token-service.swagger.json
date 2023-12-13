@@ -11,14 +11,14 @@
     "application/json"
   ],
   "paths": {
-    "/v1/token/check": {
+    "/v1/token/create": {
       "post": {
-        "operationId": "TokenService_CheckToken",
+        "operationId": "TokenService_CreateToken",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/tokenCheckTokenResponse"
+              "$ref": "#/definitions/tokenCreateTokenResponse"
             }
           },
           "default": {
@@ -34,7 +34,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/tokenCheckTokenRequest"
+              "$ref": "#/definitions/tokenCreateTokenRequest"
             }
           }
         ],
@@ -50,7 +50,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/tokenRemoveTokenResponse"
+              "$ref": "#/definitions/tokenDeleteTokenResponse"
             }
           },
           "default": {
@@ -66,7 +66,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/tokenRemoveTokenRequest"
+              "$ref": "#/definitions/tokenDeleteTokenRequest"
             }
           }
         ],
@@ -75,14 +75,14 @@
         ]
       }
     },
-    "/v1/token/generate": {
+    "/v1/token/exchange": {
       "post": {
-        "operationId": "TokenService_GenerateToken",
+        "operationId": "TokenService_ExchangeToken",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/tokenGenerateTokenResponse"
+              "$ref": "#/definitions/tokenExchangeTokenResponse"
             }
           },
           "default": {
@@ -98,7 +98,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/tokenGenerateTokenRequest"
+              "$ref": "#/definitions/tokenExchangeTokenRequest"
             }
           }
         ],
@@ -174,26 +174,7 @@
         }
       }
     },
-    "tokenCheckTokenRequest": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "$ref": "#/definitions/tokenToken"
-        }
-      }
-    },
-    "tokenCheckTokenResponse": {
-      "type": "object",
-      "properties": {
-        "account_id": {
-          "type": "string"
-        },
-        "status": {
-          "$ref": "#/definitions/tokenTokenStatus"
-        }
-      }
-    },
-    "tokenGenerateTokenRequest": {
+    "tokenCreateTokenRequest": {
       "type": "object",
       "properties": {
         "ssh_pub_key": {
@@ -201,11 +182,42 @@
         }
       }
     },
-    "tokenGenerateTokenResponse": {
+    "tokenCreateTokenResponse": {
       "type": "object",
       "properties": {
         "token": {
-          "$ref": "#/definitions/tokenToken"
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "tokenDeleteTokenRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "tokenDeleteTokenResponse": {
+      "type": "object"
+    },
+    "tokenExchangeTokenRequest": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "tokenExchangeTokenResponse": {
+      "type": "object",
+      "properties": {
+        "account_id": {
+          "type": "string"
         }
       }
     },
@@ -213,49 +225,18 @@
       "type": "object",
       "properties": {
         "token": {
-          "type": "string",
-          "format": "byte"
+          "type": "string"
         }
       }
     },
     "tokenRefreshTokenResponse": {
       "type": "object",
       "properties": {
-        "token": {
-          "$ref": "#/definitions/tokenToken"
-        }
-      }
-    },
-    "tokenRemoveTokenRequest": {
-      "type": "object",
-      "properties": {
-        "ssh_key": {
+        "expires_at": {
           "type": "string",
-          "format": "byte"
+          "format": "date-time"
         }
       }
-    },
-    "tokenRemoveTokenResponse": {
-      "type": "object"
-    },
-    "tokenToken": {
-      "type": "object",
-      "properties": {
-        "token": {
-          "type": "string"
-        },
-        "status": {
-          "$ref": "#/definitions/tokenTokenStatus"
-        }
-      }
-    },
-    "tokenTokenStatus": {
-      "type": "string",
-      "enum": [
-        "UNDEFINED",
-        "VALID"
-      ],
-      "default": "UNDEFINED"
     }
   }
 }

@@ -2,7 +2,7 @@ package cli
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
@@ -39,7 +39,7 @@ var accountCreate = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp.GetAccount())
 	},
 }
 
@@ -57,7 +57,7 @@ var accountGet = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp.GetAccount())
 	},
 }
 
@@ -89,7 +89,7 @@ var accountUpdate = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp.GetAccount())
 	},
 }
 
@@ -107,13 +107,13 @@ var accountDelete = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp)
 	},
 }
 
-var accountSshKeys = &cobra.Command{
+var accountKeysRoot = &cobra.Command{
 	Use:   "key",
-	Short: "iamcli account key",
+	Short: "iamcli key",
 }
 
 var accountId string
@@ -129,7 +129,7 @@ var accountSshKeysList = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp.GetKeys())
 	},
 }
 
@@ -150,24 +150,31 @@ var accountSshKeyCreate = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp.GetKey())
 	},
 }
 
+var fingerprint string
 var accountSshKeyDelete = &cobra.Command{
 	Use:   "delete",
-	Short: "iamcli account key delete --account-id ID --file SSH_PUB_KEY_FILE_PATH",
+	Short: "iamcli account key delete --account-id ID <--file SSH_PUB_KEY_FILE_PATH or --fingerprint FINGERPRINT>",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		client := mustConnectAccountService()
 
-		key, err := os.ReadFile(filePath)
-		handleError(err)
+		if cmd.Flags().Changed("fingerprint") == cmd.Flags().Changed("file") {
+			log.Fatal("expected either --fingerprint or --file")
+		}
 
-		parsedKey, err := sshutil.ParsePublicKey(key)
-		handleError(err)
+		if cmd.Flags().Changed("file") {
+			key, err := os.ReadFile(filePath)
+			handleError(err)
 
-		fingerprint := sshutil.GetFingerprint(parsedKey)
+			parsedKey, err := sshutil.ParsePublicKey(key)
+			handleError(err)
+
+			fingerprint = sshutil.GetFingerprint(parsedKey)
+		}
 
 		resp, err := client.DeleteSshKey(context.Background(), &account.DeleteSshKeyRequest{
 			AccountId:      accountId,
@@ -175,7 +182,7 @@ var accountSshKeyDelete = &cobra.Command{
 		})
 		handleError(err)
 
-		fmt.Println(resp.String())
+		print(resp)
 	},
 }
 
@@ -188,21 +195,20 @@ func init() {
 	accountUpdate.PersistentFlags().StringVar(&name, "name", "", "New name for the Account")
 	accountUpdate.PersistentFlags().StringVar(&description, "description", "", "New description for the Account")
 
-	accountSshKeys.PersistentFlags().StringVar(&accountId, "account-id", "", "Account ID")
-	accountSshKeys.MarkFlagRequired("account-id")
-	accountSshKeys.AddCommand(accountSshKeysList)
+	accountKeysRoot.PersistentFlags().StringVar(&accountId, "account-id", "", "Account ID")
+	accountKeysRoot.MarkFlagRequired("account-id")
+	accountKeysRoot.AddCommand(accountSshKeysList)
 
 	accountSshKeyCreate.PersistentFlags().StringVar(&filePath, "file", "", "Path to ssh public key")
 	accountSshKeyCreate.MarkFlagRequired("file")
-	accountSshKeys.AddCommand(accountSshKeyCreate)
+	accountKeysRoot.AddCommand(accountSshKeyCreate)
 
 	accountSshKeyDelete.PersistentFlags().StringVar(&filePath, "file", "", "Path to ssh public key")
-	accountSshKeyDelete.MarkFlagRequired("file")
-	accountSshKeys.AddCommand(accountSshKeyDelete)
+	accountSshKeyDelete.PersistentFlags().StringVar(&fingerprint, "fingerprint", "", "Ssh public key fingerprint")
+	accountKeysRoot.AddCommand(accountSshKeyDelete)
 
 	accountRoot.AddCommand(accountCreate)
 	accountRoot.AddCommand(accountUpdate)
 	accountRoot.AddCommand(accountGet)
 	accountRoot.AddCommand(accountDelete)
-	accountRoot.AddCommand(accountSshKeys)
 }
