@@ -5,7 +5,10 @@ service:
   account_address: account-service:8443
   connection_timeout: 10s
   token_length: 64
-  only_cache_mode: false
+
+expire:
+  min_interval: 15s
+  max_interval: 1m
 
 postgres:
   host: rc1a-4s9kodv0e4g841m3.mdb.yandexcloud.net

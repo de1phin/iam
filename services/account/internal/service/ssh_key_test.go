@@ -6,6 +6,7 @@ import (
 	"time"
 
 	account "github.com/de1phin/iam/genproto/services/account/api"
+	"github.com/de1phin/iam/pkg/sshutil"
 	"github.com/de1phin/iam/services/account/internal/database"
 	"github.com/de1phin/iam/services/account/internal/database/cache"
 	"github.com/de1phin/iam/services/account/internal/service"
@@ -26,7 +27,7 @@ func TestCreateInvalidSshKey(t *testing.T) {
 
 	resp, err := accoundService.CreateSshKey(context.Background(), &account.CreateSshKeyRequest{
 		AccountId: accoundId,
-		PublicKey: []byte("invalid public key"),
+		PublicKey: "invalid public key",
 	})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "InvalidArgument")
@@ -42,7 +43,7 @@ func TestCreateSshKeyAccountNotFound(t *testing.T) {
 	_, sshPubKey := mustGenerateSshKey()
 	_, err := accountService.CreateSshKey(context.Background(), &account.CreateSshKeyRequest{
 		AccountId: "account_id",
-		PublicKey: sshPubKey.Marshal(),
+		PublicKey: string(sshPubKey.Marshal()),
 	})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "NotFound")
@@ -63,12 +64,12 @@ func TestDuplicateSshKey(t *testing.T) {
 	_, sshPubKey := mustGenerateSshKey()
 	createResp, err := accountService.CreateSshKey(context.Background(), &account.CreateSshKeyRequest{
 		AccountId: accoundId,
-		PublicKey: sshPubKey.Marshal(),
+		PublicKey: string(sshPubKey.Marshal()),
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, accoundId, createResp.GetKey().GetAccountId())
-	assert.Equal(t, sshPubKey.Marshal(), createResp.GetKey().GetPublicKey())
-	assert.Equal(t, service.GetFingerprint(sshPubKey), createResp.GetKey().GetFingerprint())
+	assert.Equal(t, string(sshPubKey.Marshal()), createResp.GetKey().GetPublicKey())
+	assert.Equal(t, sshutil.GetFingerprint(sshPubKey), createResp.GetKey().GetFingerprint())
 	// check created_at is valid [-1s;now]
 	assert.True(t, createResp.GetKey().GetCreatedAt().IsValid())
 	assert.True(t, createResp.GetKey().GetCreatedAt().AsTime().Before(time.Now()))
@@ -76,7 +77,7 @@ func TestDuplicateSshKey(t *testing.T) {
 
 	_, err = accountService.CreateSshKey(context.Background(), &account.CreateSshKeyRequest{
 		AccountId: accoundId,
-		PublicKey: sshPubKey.Marshal(),
+		PublicKey: string(sshPubKey.Marshal()),
 	})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "AlreadyExists")
@@ -176,14 +177,14 @@ func TestSameSshKeyProhibited(t *testing.T) {
 
 	_, err := accountService.CreateSshKey(ctx, &account.CreateSshKeyRequest{
 		AccountId: accountId1,
-		PublicKey: sshPubKey.Marshal(),
+		PublicKey: string(sshPubKey.Marshal()),
 	})
 	assert.NoError(t, err)
 
 	// same account same ssh key prohibited
 	_, err = accountService.CreateSshKey(ctx, &account.CreateSshKeyRequest{
 		AccountId: accountId1,
-		PublicKey: sshPubKey.Marshal(),
+		PublicKey: string(sshPubKey.Marshal()),
 	})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "AlreadyExists")
@@ -191,7 +192,7 @@ func TestSameSshKeyProhibited(t *testing.T) {
 	// different account same ssh key also prohibited
 	_, err = accountService.CreateSshKey(ctx, &account.CreateSshKeyRequest{
 		AccountId: accountId2,
-		PublicKey: sshPubKey.Marshal(),
+		PublicKey: string(sshPubKey.Marshal()),
 	})
 	assert.Error(t, err)
 	assert.ErrorContains(t, err, "AlreadyExists")
@@ -214,12 +215,12 @@ func TestSshKeyValidCRUD(t *testing.T) {
 
 	createResp, err := accountService.CreateSshKey(ctx, &account.CreateSshKeyRequest{
 		AccountId: accoundId,
-		PublicKey: sshPubKey1.Marshal(),
+		PublicKey: string(sshPubKey1.Marshal()),
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, accoundId, createResp.GetKey().GetAccountId())
-	assert.Equal(t, sshPubKey1.Marshal(), createResp.GetKey().GetPublicKey())
-	assert.Equal(t, service.GetFingerprint(sshPubKey1), createResp.GetKey().GetFingerprint())
+	assert.Equal(t, string(sshPubKey1.Marshal()), createResp.GetKey().GetPublicKey())
+	assert.Equal(t, sshutil.GetFingerprint(sshPubKey1), createResp.GetKey().GetFingerprint())
 	// check created_at is valid [-1s;now]
 	assert.True(t, createResp.GetKey().GetCreatedAt().IsValid())
 	assert.True(t, createResp.GetKey().GetCreatedAt().AsTime().Before(time.Now()))
@@ -229,12 +230,12 @@ func TestSshKeyValidCRUD(t *testing.T) {
 
 	createResp, err = accountService.CreateSshKey(ctx, &account.CreateSshKeyRequest{
 		AccountId: accoundId,
-		PublicKey: sshPubKey2.Marshal(),
+		PublicKey: string(sshPubKey2.Marshal()),
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, accoundId, createResp.GetKey().GetAccountId())
-	assert.Equal(t, sshPubKey2.Marshal(), createResp.GetKey().GetPublicKey())
-	assert.Equal(t, service.GetFingerprint(sshPubKey2), createResp.GetKey().GetFingerprint())
+	assert.Equal(t, string(sshPubKey2.Marshal()), createResp.GetKey().GetPublicKey())
+	assert.Equal(t, sshutil.GetFingerprint(sshPubKey2), createResp.GetKey().GetFingerprint())
 	// check created_at is valid [-1s;now]
 	assert.True(t, createResp.GetKey().GetCreatedAt().IsValid())
 	assert.True(t, createResp.GetKey().GetCreatedAt().AsTime().Before(time.Now()))
@@ -247,16 +248,16 @@ func TestSshKeyValidCRUD(t *testing.T) {
 	assert.Len(t, listResp.GetKeys(), 2)
 
 	assert.Equal(t, listResp.GetKeys()[0].GetAccountId(), accoundId)
-	assert.Equal(t, listResp.GetKeys()[0].GetFingerprint(), service.GetFingerprint(sshPubKey1))
-	assert.Equal(t, listResp.GetKeys()[0].GetPublicKey(), sshPubKey1.Marshal())
+	assert.Equal(t, listResp.GetKeys()[0].GetFingerprint(), sshutil.GetFingerprint(sshPubKey1))
+	assert.Equal(t, listResp.GetKeys()[0].GetPublicKey(), string(sshPubKey1.Marshal()))
 
 	assert.Equal(t, listResp.GetKeys()[1].GetAccountId(), accoundId)
-	assert.Equal(t, listResp.GetKeys()[1].GetFingerprint(), service.GetFingerprint(sshPubKey2))
-	assert.Equal(t, listResp.GetKeys()[1].GetPublicKey(), sshPubKey2.Marshal())
+	assert.Equal(t, listResp.GetKeys()[1].GetFingerprint(), sshutil.GetFingerprint(sshPubKey2))
+	assert.Equal(t, listResp.GetKeys()[1].GetPublicKey(), string(sshPubKey2.Marshal()))
 
 	_, err = accountService.DeleteSshKey(ctx, &account.DeleteSshKeyRequest{
 		AccountId:      accoundId,
-		KeyFingerprint: service.GetFingerprint(sshPubKey1),
+		KeyFingerprint: sshutil.GetFingerprint(sshPubKey1),
 	})
 	assert.NoError(t, err)
 
@@ -267,12 +268,12 @@ func TestSshKeyValidCRUD(t *testing.T) {
 	assert.Len(t, listResp.GetKeys(), 1)
 
 	assert.Equal(t, listResp.GetKeys()[0].GetAccountId(), accoundId)
-	assert.Equal(t, listResp.GetKeys()[0].GetFingerprint(), service.GetFingerprint(sshPubKey2))
-	assert.Equal(t, listResp.GetKeys()[0].GetPublicKey(), sshPubKey2.Marshal())
+	assert.Equal(t, listResp.GetKeys()[0].GetFingerprint(), sshutil.GetFingerprint(sshPubKey2))
+	assert.Equal(t, listResp.GetKeys()[0].GetPublicKey(), string(sshPubKey2.Marshal()))
 
 	_, err = accountService.DeleteSshKey(ctx, &account.DeleteSshKeyRequest{
 		AccountId:      accoundId,
-		KeyFingerprint: service.GetFingerprint(sshPubKey2),
+		KeyFingerprint: sshutil.GetFingerprint(sshPubKey2),
 	})
 	assert.NoError(t, err)
 

@@ -4,12 +4,13 @@ package iam.services.token;
 
 option go_package = "./token";
 
+import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 
 service TokenService {
-    rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse) {
+    rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse) {
         option (google.api.http) = {
-            post: "/v1/token/generate"
+            post: "/v1/token/create"
             body: "*"
         };
     };
@@ -19,56 +20,47 @@ service TokenService {
             body: "*"
         };
     };
-    rpc DeleteToken(RemoveTokenRequest) returns (RemoveTokenResponse) {
+    rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse) {
         option (google.api.http) = {
             post: "/v1/token/delete"
             body: "*"
         };
     };
-    rpc CheckToken(CheckTokenRequest) returns (CheckTokenResponse) {
+    rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse) {
         option (google.api.http) = {
-            post: "/v1/token/check"
+            post: "/v1/token/exchange"
             body: "*"
         };
     };
 }
 
-enum TokenStatus {
-    UNDEFINED = 0;
-    VALID = 1;
-}
-message Token {
-    string token = 1;
-    TokenStatus status = 2;
-}
-
-message GenerateTokenRequest {
+message CreateTokenRequest {
     string ssh_pub_key = 1;
 }
 
-message GenerateTokenResponse {
-    Token token = 1;
+message CreateTokenResponse {
+    string token = 1;
+    google.protobuf.Timestamp expires_at = 2;
 }
 
 message RefreshTokenRequest {
-    bytes token = 1;
+    string token = 1;
 }
 
 message RefreshTokenResponse {
-    Token token = 1;
+    google.protobuf.Timestamp expires_at = 1;
 }
 
-message RemoveTokenRequest {
-    bytes ssh_key = 1;
+message DeleteTokenRequest {
+    string token = 1;
 }
 
-message RemoveTokenResponse {}
+message DeleteTokenResponse {}
 
-message CheckTokenRequest {
-    Token token = 1;
+message ExchangeTokenRequest {
+    string token = 1;
 }
 
-message CheckTokenResponse {
+message ExchangeTokenResponse {
     string account_id = 1;
-    TokenStatus status = 2;
 }

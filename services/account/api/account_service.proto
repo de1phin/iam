@@ -33,7 +33,7 @@ message Account {
 message SshKey {
     string fingerprint = 1;
     string account_id = 2;
-    bytes public_key = 3;
+    string public_key = 3;
     google.protobuf.Timestamp created_at = 4;
 }
 
@@ -76,7 +76,7 @@ message DeleteAccountRequest {
 message DeleteAccountResponse {}
 
 message GetAccountBySshKeyRequest {
-    bytes ssh_pub_key = 1;
+    string ssh_pub_key = 1;
 }
 
 message GetAccountBySshKeyResponse {
@@ -87,7 +87,7 @@ message GetAccountBySshKeyResponse {
 
 message CreateSshKeyRequest {
     string account_id = 1;
-    bytes public_key = 2;
+    string public_key = 2;
 }
 
 message CreateSshKeyResponse {

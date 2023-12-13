@@ -2,3 +2,11 @@
 server:
   address: 0.0.0.0:8443
   connection_timeout: 10s
+
+postgres:
+  host: rc1a-4s9kodv0e4g841m3.mdb.yandexcloud.net
+  port: 6432
+  user: account-service-user
+  dbname: account-service
+
+postgres_password_lockbox_secret_id: e6qav0q81e7am68ghadt

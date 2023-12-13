@@ -22,7 +22,7 @@ func NewAccountWrapper(cl Client) *AccountWrapper {
 	}
 }
 
-func (w *AccountWrapper) GetAccountBySshKey(ctx context.Context, sshPubKey []byte) (string, error) {
+func (w *AccountWrapper) GetAccountBySshKey(ctx context.Context, sshPubKey string) (string, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "client/wrapper/GetAccountBySshKey")
 	defer span.Finish()
 

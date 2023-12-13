@@ -105,7 +105,7 @@ func (a *application) initRepos(ctx context.Context) {
 }
 
 func (a *application) initFacade() {
-	a.facade = facade.NewFacade(a.repositories.cache, a.repositories.repo, a.generator, a.cfg.Service.OnlyCacheMode)
+	a.facade = facade.NewFacade(a.repositories.repo, a.generator)
 }
 
 func (a *application) initService() {
@@ -116,10 +116,15 @@ func (a *application) Run(ctx context.Context) error {
 	server.StartTokenService(ctx, a.service, a.wg, a.cfg.Service.GrpcAddress)
 	server.InitTokenSwagger(ctx, a.wg, a.cfg.Service.SwaggerAddress, a.cfg.Service.SwaggerHost, a.cfg.Service.GrpcAddress)
 
+	if a.cfg.Expire != nil {
+		go a.service.RunExpirationRoutine(ctx, a.cfg.Expire.MinInterval, a.cfg.Expire.MaxInterval)
+	}
+
 	return nil
 }
 
 func (a *application) Close() {
+	a.service.StopExpirationRoutine()
 	if !a.cfg.Service.OnlyCacheMode {
 		a.connections.database.Close()
 	}
@@ -184,9 +189,15 @@ func readConfig(configPath string) *Config {
 }
 
 type Config struct {
-	Service                         TokenService `yaml:"service"`
-	Postgres                        Postgres     `yaml:"postgres"`
-	PostgresPasswordLockboxSecretID string       `yaml:"postgres_password_lockbox_secret_id"`
+	Service                         TokenService  `yaml:"service"`
+	Postgres                        Postgres      `yaml:"postgres"`
+	PostgresPasswordLockboxSecretID string        `yaml:"postgres_password_lockbox_secret_id"`
+	Expire                          *ExpireConfig `yaml:"expire"`
+}
+
+type ExpireConfig struct {
+	MinInterval time.Duration `yaml:"min_interval"`
+	MaxInterval time.Duration `yaml:"max_interval"`
 }
 
 type TokenService struct {

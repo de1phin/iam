@@ -1,6 +1,6 @@
 proto = services/account/api services/token/api services/access/api
 
-.PHONY: generate, $(proto)
+.PHONY: generate cli $(proto)
 
 generate: $(proto)
 
@@ -18,3 +18,6 @@ $(proto):
 
 test:
 	go test ./...
+
+cli:
+	go build -o ./iamcli ./cli/cmd/main.go

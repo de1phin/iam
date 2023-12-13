@@ -89,67 +89,6 @@ func (c *MemCache) DeleteToken(ctx context.Context, ssh string) error {
 	return nil
 }
 
-type SshKey struct {
-	Token string
-}
-
-type SshValue struct {
-	Ssh string
-}
-
-func (c *MemCache) GetSsh(ctx context.Context, token string) (string, error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "cache/GetSsh")
-	defer span.Finish()
-
-	key, err := marshalStruct(&SshKey{Token: token})
-	if err != nil {
-		return "", err
-	}
-
-	value, exist := c.conn.Get(string(key))
-	if !exist {
-		return "", ErrNotFound
-	}
-
-	var existValue SshValue
-	if err = json.Unmarshal(value, &existValue); err != nil {
-		return "", fmt.Errorf("json.Unmarshal: %w", err)
-	}
-
-	return existValue.Ssh, nil
-}
-
-func (c *MemCache) SetSsh(ctx context.Context, token string, ssh string) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "cache/SetSsh")
-	defer span.Finish()
-
-	key, value, err := marshalKeyValue(&SshKey{Token: token}, &SshValue{Ssh: ssh})
-	if err != nil {
-		return err
-	}
-
-	isCreated := c.conn.Create(string(key), value)
-	if isCreated {
-		c.conn.Update(string(key), value)
-	}
-
-	return nil
-}
-
-func (c *MemCache) DeleteSsh(ctx context.Context, token string) error {
-	span, _ := opentracing.StartSpanFromContext(ctx, "cache/DeleteSsh")
-	defer span.Finish()
-
-	key, err := marshalStruct(&SshKey{Token: token})
-	if err != nil {
-		return err
-	}
-
-	c.conn.Delete(string(key))
-
-	return nil
-}
-
 func marshalKeyValue(key, value any) ([]byte, []byte, error) {
 	keyBuff, err := marshalStruct(key)
 	if err != nil {

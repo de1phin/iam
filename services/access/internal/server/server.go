@@ -10,6 +10,7 @@ import (
 
 	access "github.com/de1phin/iam/genproto/services/access/api"
 	"github.com/de1phin/iam/services/access/internal/core"
+	"github.com/de1phin/iam/services/access/internal/postgres"
 	"github.com/de1phin/iam/services/access/internal/service"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -90,6 +91,9 @@ func (s *Server) AddRole(ctx context.Context, req *access.AddRoleRequest) (*acce
 
 func (s *Server) GetRole(ctx context.Context, req *access.GetRoleRequest) (*access.GetRoleResponse, error) {
 	role, err := s.AccessService.GetRole(ctx, req.GetName())
+	if errors.Is(err, postgres.ErrNotExist{}) {
+		return nil, status.Error(codes.NotFound, "Role does not exist")
+	}
 	if err != nil {
 		return nil, InternalError(err)
 	}
